@@ -1,5 +1,7 @@
 ### 功能介绍
 这里是有 sLMxf 制作的 Graph-Editor v1.1!
+
+类似于 [csa](https://csacademy.com/app/graph_editor/) 的画图，我们也制作了 Graph-Editor，当然问题很多，欢迎[洛谷私信](https://www.luogu.com.cn/user/752953)。
 ### 操作指引
 1. 基本操作
   - 点击左侧工具栏的按钮选择不同工具
