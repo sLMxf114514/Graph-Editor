@@ -73,26 +73,29 @@
                 <span>Graph Editor</span>
             </h1>
             
-            <!-- 文件操作按钮 -->
-            
-            <div class="hidden md:flex space-x-2">
-                <button id="new-graph" class="px-3 py-1 text-sm rounded hover:bg-gray-100 transition-colors flex items-center">
-                    <i class="fa fa-file-o mr-1"></i> 新建
-                </button>
-                <button id="import-graph" class="px-3 py-1 text-sm rounded hover:bg-gray-100 transition-colors flex items-center">
-                    <i class="fa fa-upload mr-1"></i> 导入
-                </button>
-                <button id="export-graph" class="px-3 py-1 text-sm rounded hover:bg-gray-100 transition-colors flex items-center">
-                    <i class="fa fa-download mr-1"></i> 导出
-                </button>
-                <button id="show-guide" class="px-3 py-1 text-sm rounded hover:bg-gray-100 transition-colors flex items-center">
-                    <i class="fa fa-question-circle mr-1"></i> 帮助
-                </button>
-                <input type="file" id="import-file" accept=".json" class="hidden">
-            </div>
             <!-- 分类下拉菜单 -->
             <div class="hidden md:flex space-x-1 ml-4 relative">
-                <!-- 使用分类 -->
+                <!-- 操作分类 -->
+                <div class="relative group">
+                    <button class="px-3 py-1 text-sm rounded hover:bg-gray-100 transition-colors flex items-center">
+                        操作
+                        <i class="fa fa-chevron-down ml-1 text-xs"></i>
+                    </button>
+                    <div class="dropdown-content group-hover:block">
+                        <button id="new-graph-dropdown" class="dropdown-item">
+                            <i class="fa fa-file-o mr-1"></i> 新建
+                        </button>
+                        <button id="import-graph-dropdown" class="dropdown-item">
+                            <i class="fa fa-upload mr-1"></i> 导入
+                        </button>
+                        <button id="export-graph-dropdown" class="dropdown-item">
+                            <i class="fa fa-download mr-1"></i> 导出
+                        </button>
+                        <button id="show-guide-dropdown" class="dropdown-item">
+                            <i class="fa fa-question-circle mr-1"></i> 帮助
+                        </button>
+                    </div>
+                </div>
                 
                 <!-- 学习分类 -->
                 <div class="relative group">
@@ -103,8 +106,8 @@
                     <div class="dropdown-content group-hover:block">
                         <a href="https://www.luogu.com.cn" class="dropdown-item">洛谷</a>
                         <a href="https://vjudge.net" class="dropdown-item">vjudge</a>
-                        <a href="https://codeforces.com" class="dropdown-item">codeforces</a>
-                        <a href="https://atcoder.jp" class="dropdown-item">ATcoder</a>
+                        <a href="https://codeforces.com" class="dropdown-item">CodeForces</a>
+                        <a href="https://atcoder.jp" class="dropdown-item">Atcoder</a>
                     </div>
                 </div>
                 
@@ -161,6 +164,9 @@
             </button>
             <button id="weighted-edge-btn" class="w-8 h-8 rounded flex items-center justify-center border border-gray-300 hover:bg-gray-50 transition-colors" title="Add Weighted Edge (W)">
                 <i class="fa fa-balance-scale text-xs"></i>
+            </button>
+            <button id="batch-edges-btn" class="w-8 h-8 rounded flex items-center justify-center border border-gray-300 hover:bg-gray-50 transition-colors" title="Add Multiple Edges (M)">
+                <i class="fa fa-sitemap text-xs"></i>
             </button>
             <button id="delete-tool" class="w-8 h-8 rounded flex items-center justify-center border border-gray-300 hover:bg-gray-50 transition-colors" title="Delete (Delete)">
                 <i class="fa fa-trash-o"></i>
@@ -290,7 +296,7 @@
         </div>
         <div>
             <span class="mr-4">Press H for help</span>
-            <span>v1.1</span>
+            <span>v1.2</span>
         </div>
     </footer>
 
@@ -321,6 +327,31 @@
                 <div class="flex justify-end space-x-2 pt-2">
                     <button id="cancel-edge" class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50">取消</button>
                     <button id="confirm-edge" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90">确认</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 批量添加边模态框 -->
+    <div id="batch-edges-modal" class="fixed inset-0 bg-black/50 modal-backdrop flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl transform transition-all">
+            <h3 class="text-lg font-semibold mb-4">批量添加有向边</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        边定义 (每行一条，格式: 起点ID,终点ID,权重)
+                    </label>
+                    <textarea id="batch-edges-input" rows="8" class="w-full px-3 py-2 border border-gray-300 rounded-md font-mono text-sm" placeholder="例如:
+n1,n2,3
+n2,n3,5
+n3,n1,2"></textarea>
+                </div>
+                <div class="text-xs text-gray-500 italic">
+                    提示: 权重为可选参数，默认为1。例如 "n1,n2" 等价于 "n1,n2,1"。不存在的节点将自动创建。
+                </div>
+                <div class="flex justify-end space-x-2 pt-2">
+                    <button id="cancel-batch-edges" class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50">取消</button>
+                    <button id="confirm-batch-edges" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90">确认添加</button>
                 </div>
             </div>
         </div>
@@ -363,6 +394,7 @@
                         <li>点击"添加边"工具(E)，依次点击两个节点创建无向边</li>
                         <li>点击"添加有向边"工具(D)，依次点击两个节点创建有向边</li>
                         <li>点击"添加带权边"工具(W)，通过对话框创建带权重的边</li>
+                        <li>点击"批量添加边"工具(M)，可一次性添加多条有向边</li>
                         <li>选中边后按Delete键删除</li>
                         <li>可编辑边的标签、权重、颜色、宽度和类型</li>
                     </ul>
@@ -393,6 +425,7 @@
                         <div>E - 添加无向边</div>
                         <div>D - 添加有向边</div>
                         <div>W - 添加带权边</div>
+                        <div>M - 批量添加边</div>
                         <div>Delete - 删除选中元素</div>
                         <div>Ctrl+Z - 撤销</div>
                         <div>Ctrl+Y - 重做</div>
@@ -470,19 +503,34 @@
                 this.nextEdgeId = state.nextEdgeId;
             }
             
-            addNode(x, y, label = '') {
-                const id = `n${this.nextNodeId++}`;
+            addNode(x, y, label = '', id = null) {
+                // 如果指定了ID且不存在，则使用指定的ID
+                if (id && !this.nodes.has(id)) {
+                    const node = {
+                        id,
+                        x,
+                        y,
+                        label: label || id,
+                        color: '#3B82F6',
+                        borderColor: '#1D4ED8',
+                        size: 30
+                    };
+                    this.nodes.set(id, node);
+                    return node;
+                }
+                
+                // 否则生成新ID
+                const generatedId = `n${this.nextNodeId++}`;
                 const node = {
-                    id,
+                    id: generatedId,
                     x,
                     y,
-                    label: label || id,
+                    label: label || generatedId,
                     color: '#3B82F6',
                     borderColor: '#1D4ED8',
                     size: 30
                 };
-                this.nodes.set(id, node);
-                this.saveHistory();
+                this.nodes.set(generatedId, node);
                 return node;
             }
             
@@ -505,8 +553,61 @@
                     direction: options.direction || 'undirected'
                 };
                 this.edges.set(id, edge);
-                this.saveHistory();
                 return edge;
+            }
+            
+            // 批量添加边，自动创建不存在的节点
+            addEdges(edges) {
+                const addedEdges = [];
+                const addedNodes = [];
+                
+                // 先收集所有需要的节点ID
+                const allNodeIds = new Set();
+                edges.forEach(edgeData => {
+                    allNodeIds.add(edgeData.source);
+                    allNodeIds.add(edgeData.target);
+                });
+                
+                // 计算画布中心位置
+                const centerX = canvas.width / 2 / zoom + panX;
+                const centerY = canvas.height / 2 / zoom + panY;
+                const radius = 200;
+                const count = allNodeIds.size;
+                
+                // 创建不存在的节点，围绕中心圆形排列
+                Array.from(allNodeIds).forEach((nodeId, index) => {
+                    if (!this.nodes.has(nodeId)) {
+                        const angle = (index / count) * Math.PI * 2;
+                        const x = centerX + radius * Math.cos(angle);
+                        const y = centerY + radius * Math.sin(angle);
+                        const node = this.addNode(x, y, nodeId, nodeId);
+                        addedNodes.push(node);
+                    }
+                });
+                
+                // 添加所有边
+                edges.forEach(edgeData => {
+                    const edge = this.addEdge(
+                        edgeData.source,
+                        edgeData.target,
+                        {
+                            weight: edgeData.weight,
+                            direction: edgeData.direction || 'directed',
+                            label: edgeData.weight.toString()
+                        }
+                    );
+                    
+                    if (edge) {
+                        addedEdges.push(edge);
+                    }
+                });
+                
+                // 只有在有成功添加的元素时才保存历史记录
+                if (addedEdges.length > 0 || addedNodes.length > 0) {
+                    this.saveHistory();
+                }
+                
+                return { addedEdges, addedNodes };
             }
             
             removeNode(id) {
@@ -699,6 +800,9 @@
         let dragElement = null;
         let edgeStartNode = null;
         let currentTool = 'select';
+        // 新增：记录拖拽偏移量，解决节点拖拽初始跳动问题
+        let dragOffsetX = 0;
+        let dragOffsetY = 0;
         
         // 初始化画布
         function initCanvas() {
@@ -723,12 +827,16 @@
             canvas.addEventListener('mousewheel', handleMouseWheel);
             document.addEventListener('keydown', handleKeyDown);
             
+            // 鼠标离开画布时结束拖拽
+            canvas.addEventListener('mouseleave', handleMouseUp);
+            
             // 工具按钮事件
             document.getElementById('select-tool').addEventListener('click', () => setTool('select'));
             document.getElementById('node-tool').addEventListener('click', () => setTool('node'));
             document.getElementById('edge-tool').addEventListener('click', () => setTool('edge'));
             document.getElementById('direct-edge-tool').addEventListener('click', () => setTool('direct-edge'));
             document.getElementById('weighted-edge-btn').addEventListener('click', openEdgeWeightModal);
+            document.getElementById('batch-edges-btn').addEventListener('click', openBatchEdgesModal);
             document.getElementById('delete-tool').addEventListener('click', () => setTool('delete'));
             
             // 布局按钮事件
@@ -769,6 +877,10 @@
             document.getElementById('cancel-edge').addEventListener('click', closeEdgeWeightModal);
             document.getElementById('confirm-edge').addEventListener('click', addWeightedEdge);
             
+            // 批量添加边模态框事件
+            document.getElementById('cancel-batch-edges').addEventListener('click', closeBatchEdgesModal);
+            document.getElementById('confirm-batch-edges').addEventListener('click', addBatchEdges);
+            
             // 历史记录事件
             document.getElementById('undo-btn').addEventListener('click', () => {
                 if (graph.undo()) {
@@ -786,8 +898,8 @@
                 }
             });
             
-            // 文件操作事件
-            document.getElementById('new-graph').addEventListener('click', () => {
+            // 操作下拉菜单事件
+            document.getElementById('new-graph-dropdown').addEventListener('click', () => {
                 if (confirm('确定要创建新图吗？当前图将被清空。')) {
                     graph.clear();
                     deselectElement();
@@ -796,7 +908,7 @@
                 }
             });
             
-            document.getElementById('export-graph').addEventListener('click', () => {
+            document.getElementById('export-graph-dropdown').addEventListener('click', () => {
                 const data = graph.exportGraph();
                 const json = JSON.stringify(data, null, 2);
                 const blob = new Blob([json], { type: 'application/json' });
@@ -810,8 +922,12 @@
                 URL.revokeObjectURL(url);
             });
             
-            document.getElementById('import-graph').addEventListener('click', () => {
+            document.getElementById('import-graph-dropdown').addEventListener('click', () => {
                 document.getElementById('import-file').click();
+            });
+            
+            document.getElementById('show-guide-dropdown').addEventListener('click', () => {
+                document.getElementById('guide-modal').classList.remove('hidden');
             });
             
             document.getElementById('import-file').addEventListener('change', (e) => {
@@ -835,10 +951,6 @@
             });
             
             // 帮助按钮事件
-            document.getElementById('show-guide').addEventListener('click', () => {
-                document.getElementById('guide-modal').classList.remove('hidden');
-            });
-            
             document.getElementById('close-guide').addEventListener('click', () => {
                 document.getElementById('guide-modal').classList.add('hidden');
             });
@@ -992,17 +1104,19 @@
         
         // 坐标转换：画布坐标 -> 世界坐标
         function canvasToWorld(x, y) {
+            // 修正坐标转换公式，确保拖拽位置准确
             return {
-                x: (x - canvas.width / 2) / zoom + panX + canvas.width / 2 / zoom,
-                y: (y - canvas.height / 2) / zoom + panY + canvas.height / 2 / zoom
+                x: (x - canvas.width / 2) / zoom + panX,
+                y: (y - canvas.height / 2) / zoom + panY
             };
         }
         
         // 坐标转换：世界坐标 -> 画布坐标
         function worldToCanvas(x, y) {
+            // 修正坐标转换公式，确保绘制位置准确
             return {
-                x: (x - panX) * zoom + canvas.width / 2 - panX * zoom,
-                y: (y - panY) * zoom + canvas.height / 2 - panY * zoom
+                x: (x - panX) * zoom + canvas.width / 2,
+                y: (y - panY) * zoom + canvas.height / 2
             };
         }
         
@@ -1016,6 +1130,10 @@
             dragStartX = canvasX;
             dragStartY = canvasY;
             
+            // 重置拖拽偏移量
+            dragOffsetX = 0;
+            dragOffsetY = 0;
+            
             // 检查是否点击了节点
             let clickedNode = null;
             graph.nodes.forEach(node => {
@@ -1024,6 +1142,9 @@
                 const dy = canvasY - pos.y;
                 if (dx * dx + dy * dy <= node.size * node.size * zoom * zoom) {
                     clickedNode = node;
+                    // 计算点击位置与节点中心的偏移量
+                    dragOffsetX = node.x - worldPos.x;
+                    dragOffsetY = node.y - worldPos.y;
                 }
             });
             
@@ -1050,6 +1171,8 @@
                         selectElement('node', clickedNode.id);
                         dragElement = clickedNode.id;
                         isDragging = true;
+                        // 阻止事件冒泡，避免拖动时同时触发画布拖动
+                        e.stopPropagation();
                     } else if (clickedEdge) {
                         selectElement('edge', clickedEdge.id);
                         isDragging = false;
@@ -1076,6 +1199,7 @@
                                     clickedNode.id, 
                                     { direction: currentTool === 'direct-edge' ? 'directed' : 'undirected' }
                                 );
+                                graph.saveHistory();
                                 drawGraph();
                                 updateCounters();
                             }
@@ -1105,32 +1229,31 @@
         
         // 处理鼠标移动事件
         function handleMouseMove(e) {
+            // 只有在拖拽状态下才处理移动事件
+            if (!isDragging) return;
+            
             const rect = canvas.getBoundingClientRect();
             const canvasX = e.clientX - rect.left;
             const canvasY = e.clientY - rect.top;
             const worldPos = canvasToWorld(canvasX, canvasY);
             
-            if (isDragging) {
-                if (dragElement && currentTool === 'select') {
-                    // 拖动节点
-                    const node = graph.getNode(dragElement);
-                    if (node) {
-                        node.x = worldPos.x;
-                        node.y = worldPos.y;
-                        drawGraph();
-                    }
-                } else if (currentTool === 'select') {
-                    // 拖动画布
-                    const dx = (canvasX - dragStartX) / zoom;
-                    const dy = (canvasY - dragStartY) / zoom;
-                    panX += dx;
-                    panY += dy;
-                    dragStartX = canvasX;
-                    dragStartY = canvasY;
+            if (dragElement && currentTool === 'select') {
+                // 拖动节点 - 使用偏移量修正位置，避免初始跳动
+                const node = graph.getNode(dragElement);
+                if (node) {
+                    node.x = worldPos.x + dragOffsetX;
+                    node.y = worldPos.y + dragOffsetY;
                     drawGraph();
                 }
-            } else {
-                // 悬停效果可以在这里处理
+            } else if (currentTool === 'select') {
+                // 拖动画布 - 修复方向问题：使用减法而不是加法
+                const dx = (canvasX - dragStartX) / zoom;
+                const dy = (canvasY - dragStartY) / zoom;
+                panX -= dx;  // 这里改为减法，修复方向问题
+                panY -= dy;  // 这里改为减法，修复方向问题
+                dragStartX = canvasX;
+                dragStartY = canvasY;
+                drawGraph();
             }
         }
         
@@ -1138,6 +1261,10 @@
         function handleMouseUp() {
             isDragging = false;
             dragElement = null;
+            // 重置边的创建状态
+            if (currentTool === 'edge' || currentTool === 'direct-edge') {
+                edgeStartNode = null;
+            }
         }
         
         // 处理鼠标滚轮事件（缩放）
@@ -1202,6 +1329,10 @@
                 case 'w':
                 case 'W':
                     openEdgeWeightModal();
+                    break;
+                case 'm':
+                case 'M':
+                    openBatchEdgesModal();
                     break;
                 case 'h':
                 case 'H':
@@ -1304,6 +1435,18 @@
                 return;
             }
             
+            // 检查节点是否存在，不存在则创建
+            const centerX = canvas.width / 2 / zoom + panX;
+            const centerY = canvas.height / 2 / zoom + panY;
+            
+            if (!graph.nodes.has(source)) {
+                graph.addNode(centerX - 100, centerY, source, source);
+            }
+            
+            if (!graph.nodes.has(target)) {
+                graph.addNode(centerX + 100, centerY, target, target);
+            }
+            
             const edge = graph.addEdge(source, target, {
                 weight,
                 direction,
@@ -1311,12 +1454,71 @@
             });
             
             if (edge) {
+                graph.saveHistory();
                 drawGraph();
                 updateCounters();
                 closeEdgeWeightModal();
-            } else {
-                alert('添加失败：节点ID不存在');
             }
+        }
+        
+        // 打开批量添加边模态框
+        function openBatchEdgesModal() {
+            document.getElementById('batch-edges-modal').classList.remove('hidden');
+            document.getElementById('batch-edges-input').focus();
+        }
+        
+        // 关闭批量添加边模态框
+        function closeBatchEdgesModal() {
+            document.getElementById('batch-edges-modal').classList.add('hidden');
+            document.getElementById('batch-edges-input').value = '';
+        }
+        
+        // 批量添加边
+        function addBatchEdges() {
+            const input = document.getElementById('batch-edges-input').value.trim();
+            if (!input) {
+                alert('请输入边的定义');
+                return;
+            }
+            
+            // 解析输入
+            const lines = input.split('\n');
+            const edgesToAdd = [];
+            
+            lines.forEach((line, index) => {
+                const trimmedLine = line.trim();
+                if (!trimmedLine) return;
+                
+                const parts = trimmedLine.split(',').map(p => p.trim());
+                
+                if (parts.length < 2) {
+                    alert(`第 ${index + 1} 行格式错误，至少需要起点和终点ID`);
+                    return;
+                }
+                
+                edgesToAdd.push({
+                    source: parts[0],
+                    target: parts[1],
+                    weight: parts.length >= 3 ? parseFloat(parts[2]) || 1 : 1,
+                    direction: 'directed'
+                });
+            });
+            
+            if (edgesToAdd.length === 0) {
+                return;
+            }
+            
+            // 添加边（会自动创建不存在的节点）
+            const result = graph.addEdges(edgesToAdd);
+            
+            // 显示结果
+            const message = `成功添加 ${result.addedEdges.length} 条边，自动创建 ${result.addedNodes.length} 个节点`;
+            alert(message);
+            
+            // 更新视图
+            drawGraph();
+            updateCounters();
+            closeBatchEdgesModal();
         }
         
         // 更新缩放级别显示
@@ -1522,5 +1724,6 @@
         // 初始化应用
         window.addEventListener('load', initCanvas);
     </script>
+    <input type="file" id="import-file" accept=".json" class="hidden">
 </body>
 </html>
