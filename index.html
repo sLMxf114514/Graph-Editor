@@ -55,6 +55,12 @@
             .modal-backdrop {
                 backdrop-filter: blur(2px);
             }
+            .dropdown-content {
+                @apply absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 hidden;
+            }
+            .dropdown-item {
+                @apply block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left;
+            }
         }
     </style>
 </head>
@@ -68,6 +74,7 @@
             </h1>
             
             <!-- 文件操作按钮 -->
+            
             <div class="hidden md:flex space-x-2">
                 <button id="new-graph" class="px-3 py-1 text-sm rounded hover:bg-gray-100 transition-colors flex items-center">
                     <i class="fa fa-file-o mr-1"></i> 新建
@@ -83,29 +90,36 @@
                 </button>
                 <input type="file" id="import-file" accept=".json" class="hidden">
             </div>
-            
-            <div class="hidden md:flex space-x-1 ml-4">
-                <button class="px-3 py-1 text-sm rounded hover:bg-gray-100 transition-colors flex items-center">
-                    <a href="https://www.luogu.com.cn">洛谷</a>
-                </button>
-                <button class="px-3 py-1 text-sm rounded hover:bg-gray-100 transition-colors flex items-center">
-                    <a href="https://vjudge.net">vjudge</a>
-                </button>
-                <button class="px-3 py-1 text-sm rounded hover:bg-gray-100 transition-colors flex items-center">
-                    <a href="https://codeforces.com">codeforces</a>
-                </button>
-                <button class="px-3 py-1 text-sm rounded hover:bg-gray-100 transition-colors flex items-center">
-                    <a href="https://atcoder.jp">ATcoder</a>
-                </button>
-                <button class="px-3 py-1 text-sm rounded hover:bg-gray-100 transition-colors flex items-center">
-                    <a href="https://florr.io">florr</a>
-                </button>
-                <button class="px-3 py-1 text-sm rounded hover:bg-gray-100 transition-colors flex items-center">
-                    <a href="https://petalstudy.com">zorr</a>
-                </button>
-                <button class="px-3 py-1 text-sm rounded hover:bg-gray-100 transition-colors flex items-center">
-                    <a href="https://digdig.io">digdig</a>
-                </button>
+            <!-- 分类下拉菜单 -->
+            <div class="hidden md:flex space-x-1 ml-4 relative">
+                <!-- 使用分类 -->
+                
+                <!-- 学习分类 -->
+                <div class="relative group">
+                    <button class="px-3 py-1 text-sm rounded hover:bg-gray-100 transition-colors flex items-center">
+                        学习
+                        <i class="fa fa-chevron-down ml-1 text-xs"></i>
+                    </button>
+                    <div class="dropdown-content group-hover:block">
+                        <a href="https://www.luogu.com.cn" class="dropdown-item">洛谷</a>
+                        <a href="https://vjudge.net" class="dropdown-item">vjudge</a>
+                        <a href="https://codeforces.com" class="dropdown-item">codeforces</a>
+                        <a href="https://atcoder.jp" class="dropdown-item">ATcoder</a>
+                    </div>
+                </div>
+                
+                <!-- 休闲分类 -->
+                <div class="relative group">
+                    <button class="px-3 py-1 text-sm rounded hover:bg-gray-100 transition-colors flex items-center">
+                        休闲
+                        <i class="fa fa-chevron-down ml-1 text-xs"></i>
+                    </button>
+                    <div class="dropdown-content group-hover:block">
+                        <a href="https://florr.io" class="dropdown-item">florr</a>
+                        <a href="https://petalstudy.com" class="dropdown-item">zorr</a>
+                        <a href="https://digdig.io" class="dropdown-item">digdig</a>
+                    </div>
+                </div>
             </div>
         </div>
         
@@ -129,7 +143,7 @@
         </div>
     </header>
     
-    <!-- 主内容区 -->
+    <!-- 主内容区保持不变 -->
     <main class="flex flex-1 overflow-hidden">
         <!-- 左侧工具栏 -->
         <aside class="w-12 bg-white border-r border-gray-200 panel-shadow flex flex-col items-center py-3 space-y-2 z-10">
@@ -782,14 +796,45 @@
                 }
             });
             
+            document.getElementById('export-graph').addEventListener('click', () => {
+                const data = graph.exportGraph();
+                const json = JSON.stringify(data, null, 2);
+                const blob = new Blob([json], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'graph.json';
+                a.click();
+                
+                URL.revokeObjectURL(url);
+            });
+            
             document.getElementById('import-graph').addEventListener('click', () => {
                 document.getElementById('import-file').click();
             });
             
-            document.getElementById('import-file').addEventListener('change', handleFileImport);
-            document.getElementById('export-graph').addEventListener('click', exportGraph);
+            document.getElementById('import-file').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const data = JSON.parse(event.target.result);
+                        graph.importGraph(data);
+                        deselectElement();
+                        drawGraph();
+                        updateCounters();
+                    } catch (error) {
+                        alert('导入失败：无效的JSON文件');
+                        console.error(error);
+                    }
+                };
+                reader.readAsText(file);
+            });
             
-            // 帮助向导事件
+            // 帮助按钮事件
             document.getElementById('show-guide').addEventListener('click', () => {
                 document.getElementById('guide-modal').classList.remove('hidden');
             });
@@ -798,17 +843,126 @@
                 document.getElementById('guide-modal').classList.add('hidden');
             });
             
-            // 属性面板事件
-            setupPropertiesPanelEvents();
+            // 节点属性输入事件
+            document.getElementById('node-id').addEventListener('change', (e) => {
+                if (selectedElement && selectedElement.type === 'node') {
+                    graph.updateNode(selectedElement.id, { id: e.target.value });
+                    drawGraph();
+                }
+            });
             
-            // 初始化历史记录
-            graph.saveHistory();
+            document.getElementById('node-label').addEventListener('change', (e) => {
+                if (selectedElement && selectedElement.type === 'node') {
+                    graph.updateNode(selectedElement.id, { label: e.target.value });
+                    drawGraph();
+                }
+            });
+            
+            document.getElementById('node-color').addEventListener('input', (e) => {
+                if (selectedElement && selectedElement.type === 'node') {
+                    graph.updateNode(selectedElement.id, { color: e.target.value });
+                    document.getElementById('node-color-text').value = e.target.value;
+                    drawGraph();
+                }
+            });
+            
+            document.getElementById('node-color-text').addEventListener('change', (e) => {
+                if (selectedElement && selectedElement.type === 'node') {
+                    graph.updateNode(selectedElement.id, { color: e.target.value });
+                    document.getElementById('node-color').value = e.target.value;
+                    drawGraph();
+                }
+            });
+            
+            document.getElementById('node-border-color').addEventListener('input', (e) => {
+                if (selectedElement && selectedElement.type === 'node') {
+                    graph.updateNode(selectedElement.id, { borderColor: e.target.value });
+                    document.getElementById('node-border-text').value = e.target.value;
+                    drawGraph();
+                }
+            });
+            
+            document.getElementById('node-border-text').addEventListener('change', (e) => {
+                if (selectedElement && selectedElement.type === 'node') {
+                    graph.updateNode(selectedElement.id, { borderColor: e.target.value });
+                    document.getElementById('node-border-color').value = e.target.value;
+                    drawGraph();
+                }
+            });
+            
+            document.getElementById('node-size').addEventListener('change', (e) => {
+                if (selectedElement && selectedElement.type === 'node') {
+                    graph.updateNode(selectedElement.id, { size: parseInt(e.target.value) });
+                    drawGraph();
+                }
+            });
+            
+            // 边属性输入事件
+            document.getElementById('edge-id').addEventListener('change', (e) => {
+                if (selectedElement && selectedElement.type === 'edge') {
+                    graph.updateEdge(selectedElement.id, { id: e.target.value });
+                    drawGraph();
+                }
+            });
+            
+            document.getElementById('edge-label').addEventListener('change', (e) => {
+                if (selectedElement && selectedElement.type === 'edge') {
+                    graph.updateEdge(selectedElement.id, { label: e.target.value });
+                    drawGraph();
+                }
+            });
+            
+            document.getElementById('edge-weight').addEventListener('change', (e) => {
+                if (selectedElement && selectedElement.type === 'edge') {
+                    graph.updateEdge(selectedElement.id, { weight: parseFloat(e.target.value) });
+                    drawGraph();
+                }
+            });
+            
+            document.getElementById('edge-color').addEventListener('input', (e) => {
+                if (selectedElement && selectedElement.type === 'edge') {
+                    graph.updateEdge(selectedElement.id, { color: e.target.value });
+                    document.getElementById('edge-color-text').value = e.target.value;
+                    drawGraph();
+                }
+            });
+            
+            document.getElementById('edge-color-text').addEventListener('change', (e) => {
+                if (selectedElement && selectedElement.type === 'edge') {
+                    graph.updateEdge(selectedElement.id, { color: e.target.value });
+                    document.getElementById('edge-color').value = e.target.value;
+                    drawGraph();
+                }
+            });
+            
+            document.getElementById('edge-width').addEventListener('change', (e) => {
+                if (selectedElement && selectedElement.type === 'edge') {
+                    graph.updateEdge(selectedElement.id, { width: parseInt(e.target.value) });
+                    drawGraph();
+                }
+            });
+            
+            document.getElementById('edge-type').addEventListener('change', (e) => {
+                if (selectedElement && selectedElement.type === 'edge') {
+                    graph.updateEdge(selectedElement.id, { type: e.target.value });
+                    drawGraph();
+                }
+            });
+            
+            document.getElementById('edge-direction').addEventListener('change', (e) => {
+                if (selectedElement && selectedElement.type === 'edge') {
+                    graph.updateEdge(selectedElement.id, { direction: e.target.value });
+                    drawGraph();
+                }
+            });
+            
+            // 初始化显示
+            updateCounters();
         }
         
         // 设置当前工具
         function setTool(tool) {
             currentTool = tool;
-            deselectElement();
             
             // 更新工具按钮样式
             document.querySelectorAll('aside button').forEach(btn => {
@@ -832,21 +986,63 @@
                     document.getElementById('delete-tool').classList.add('tool-active');
                     break;
             }
+            
+            deselectElement();
+        }
+        
+        // 坐标转换：画布坐标 -> 世界坐标
+        function canvasToWorld(x, y) {
+            return {
+                x: (x - canvas.width / 2) / zoom + panX + canvas.width / 2 / zoom,
+                y: (y - canvas.height / 2) / zoom + panY + canvas.height / 2 / zoom
+            };
+        }
+        
+        // 坐标转换：世界坐标 -> 画布坐标
+        function worldToCanvas(x, y) {
+            return {
+                x: (x - panX) * zoom + canvas.width / 2 - panX * zoom,
+                y: (y - panY) * zoom + canvas.height / 2 - panY * zoom
+            };
         }
         
         // 处理鼠标按下事件
         function handleMouseDown(e) {
             const rect = canvas.getBoundingClientRect();
-            const x = (e.clientX - rect.left) / zoom - panX;
-            const y = (e.clientY - rect.top) / zoom - panY;
+            const canvasX = e.clientX - rect.left;
+            const canvasY = e.clientY - rect.top;
+            const worldPos = canvasToWorld(canvasX, canvasY);
             
-            dragStartX = e.clientX;
-            dragStartY = e.clientY;
+            dragStartX = canvasX;
+            dragStartY = canvasY;
             
             // 检查是否点击了节点
-            const clickedNode = findNodeAt(x, y);
+            let clickedNode = null;
+            graph.nodes.forEach(node => {
+                const pos = worldToCanvas(node.x, node.y);
+                const dx = canvasX - pos.x;
+                const dy = canvasY - pos.y;
+                if (dx * dx + dy * dy <= node.size * node.size * zoom * zoom) {
+                    clickedNode = node;
+                }
+            });
+            
             // 检查是否点击了边
-            const clickedEdge = findEdgeAt(e.clientX - rect.left, e.clientY - rect.top);
+            let clickedEdge = null;
+            if (!clickedNode) {
+                graph.edges.forEach(edge => {
+                    const source = graph.getNode(edge.source);
+                    const target = graph.getNode(edge.target);
+                    if (!source || !target) return;
+                    
+                    const p1 = worldToCanvas(source.x, source.y);
+                    const p2 = worldToCanvas(target.x, target.y);
+                    
+                    if (isPointOnLineSegment(canvasX, canvasY, p1.x, p1.y, p2.x, p2.y, edge.width * zoom + 4)) {
+                        clickedEdge = edge;
+                    }
+                });
+            }
             
             switch(currentTool) {
                 case 'select':
@@ -859,12 +1055,12 @@
                         isDragging = false;
                     } else {
                         deselectElement();
-                        isDragging = true; // 拖动画布
+                        isDragging = true; // 开始拖动画布
                     }
                     break;
                     
                 case 'node':
-                    graph.addNode(x, y);
+                    graph.addNode(worldPos.x, worldPos.y);
                     drawGraph();
                     updateCounters();
                     break;
@@ -873,16 +1069,19 @@
                 case 'direct-edge':
                     if (clickedNode) {
                         if (edgeStartNode) {
-                            // 添加边
+                            // 完成边的创建
                             if (edgeStartNode !== clickedNode.id) {
-                                graph.addEdge(edgeStartNode, clickedNode.id, {
-                                    direction: currentTool === 'direct-edge' ? 'directed' : 'undirected'
-                                });
+                                graph.addEdge(
+                                    edgeStartNode, 
+                                    clickedNode.id, 
+                                    { direction: currentTool === 'direct-edge' ? 'directed' : 'undirected' }
+                                );
                                 drawGraph();
                                 updateCounters();
                             }
                             edgeStartNode = null;
                         } else {
+                            // 开始边的创建
                             edgeStartNode = clickedNode.id;
                         }
                     }
@@ -906,52 +1105,33 @@
         
         // 处理鼠标移动事件
         function handleMouseMove(e) {
-            if (!isDragging) {
-                // 绘制临时边
-                if (edgeStartNode && (currentTool === 'edge' || currentTool === 'direct-edge')) {
-                    drawGraph();
-                    const rect = canvas.getBoundingClientRect();
-                    const startNode = graph.getNode(edgeStartNode);
-                    if (startNode) {
-                        const startX = (startNode.x + panX) * zoom;
-                        const startY = (startNode.y + panY) * zoom;
-                        const endX = e.clientX - rect.left;
-                        const endY = e.clientY - rect.top;
-                        
-                        ctx.strokeStyle = '#64748B';
-                        ctx.lineWidth = 2;
-                        ctx.beginPath();
-                        ctx.moveTo(startX, startY);
-                        ctx.lineTo(endX, endY);
-                        ctx.stroke();
-                        
-                        // 绘制箭头（如果是有向边）
-                        if (currentTool === 'direct-edge') {
-                            drawArrowhead(ctx, endX, endY, startX, startY);
-                        }
+            const rect = canvas.getBoundingClientRect();
+            const canvasX = e.clientX - rect.left;
+            const canvasY = e.clientY - rect.top;
+            const worldPos = canvasToWorld(canvasX, canvasY);
+            
+            if (isDragging) {
+                if (dragElement && currentTool === 'select') {
+                    // 拖动节点
+                    const node = graph.getNode(dragElement);
+                    if (node) {
+                        node.x = worldPos.x;
+                        node.y = worldPos.y;
+                        drawGraph();
                     }
+                } else if (currentTool === 'select') {
+                    // 拖动画布
+                    const dx = (canvasX - dragStartX) / zoom;
+                    const dy = (canvasY - dragStartY) / zoom;
+                    panX += dx;
+                    panY += dy;
+                    dragStartX = canvasX;
+                    dragStartY = canvasY;
+                    drawGraph();
                 }
-                return;
-            }
-            
-            const dx = (e.clientX - dragStartX) / zoom;
-            const dy = (e.clientY - dragStartY) / zoom;
-            
-            if (dragElement && graph.getNode(dragElement)) {
-                // 拖动节点
-                graph.updateNode(dragElement, {
-                    x: graph.getNode(dragElement).x + dx,
-                    y: graph.getNode(dragElement).y + dy
-                });
             } else {
-                // 拖动画布
-                panX += dx;
-                panY += dy;
+                // 悬停效果可以在这里处理
             }
-            
-            dragStartX = e.clientX;
-            dragStartY = e.clientY;
-            drawGraph();
         }
         
         // 处理鼠标释放事件
@@ -967,9 +1147,8 @@
             const mouseX = e.clientX - rect.left;
             const mouseY = e.clientY - rect.top;
             
-            // 计算缩放前鼠标在世界坐标系中的位置
-            const worldX = mouseX / zoom - panX;
-            const worldY = mouseY / zoom - panY;
+            // 缩放前的鼠标世界坐标
+            const worldPosBefore = canvasToWorld(mouseX, mouseY);
             
             // 应用缩放
             if (e.deltaY < 0) {
@@ -978,9 +1157,12 @@
                 zoom = Math.max(zoom / 1.1, 0.3);
             }
             
-            // 调整平移，使鼠标指向的世界坐标点保持不变
-            panX = mouseX / zoom - worldX;
-            panY = mouseY / zoom - worldY;
+            // 缩放后的鼠标世界坐标
+            const worldPosAfter = canvasToWorld(mouseX, mouseY);
+            
+            // 调整平移以保持鼠标位置不变
+            panX += worldPosBefore.x - worldPosAfter.x;
+            panY += worldPosBefore.y - worldPosAfter.y;
             
             updateZoomLevel();
             drawGraph();
@@ -988,28 +1170,12 @@
         
         // 处理键盘事件
         function handleKeyDown(e) {
-            // 快捷键
-            switch(e.key.toLowerCase()) {
-                case 'v':
-                    setTool('select');
-                    break;
-                case 'n':
-                    setTool('node');
-                    break;
-                case 'e':
-                    setTool('edge');
-                    break;
-                case 'd':
-                    setTool('direct-edge');
-                    break;
-                case 'w':
-                    openEdgeWeightModal();
-                    break;
-                case 'delete':
+            switch(e.key) {
+                case 'Delete':
                     if (selectedElement) {
                         if (selectedElement.type === 'node') {
                             graph.removeNode(selectedElement.id);
-                        } else {
+                        } else if (selectedElement.type === 'edge') {
                             graph.removeEdge(selectedElement.id);
                         }
                         deselectElement();
@@ -1017,7 +1183,28 @@
                         updateCounters();
                     }
                     break;
+                case 'v':
+                case 'V':
+                    setTool('select');
+                    break;
+                case 'n':
+                case 'N':
+                    setTool('node');
+                    break;
+                case 'e':
+                case 'E':
+                    setTool('edge');
+                    break;
+                case 'd':
+                case 'D':
+                    setTool('direct-edge');
+                    break;
+                case 'w':
+                case 'W':
+                    openEdgeWeightModal();
+                    break;
                 case 'h':
+                case 'H':
                     document.getElementById('guide-modal').classList.remove('hidden');
                     break;
                 case 'z':
@@ -1041,91 +1228,17 @@
             }
         }
         
-        // 查找指定位置的节点
-        function findNodeAt(x, y) {
-            for (const node of graph.nodes.values()) {
-                const dx = x - node.x;
-                const dy = y - node.y;
-                if (dx * dx + dy * dy <= node.size * node.size) {
-                    return node;
-                }
-            }
-            return null;
-        }
-        
-        // 查找指定位置的边（屏幕坐标）
-        function findEdgeAt(screenX, screenY) {
-            const threshold = 5; // 点击边的阈值（像素）
-            
-            for (const edge of graph.edges.values()) {
-                const source = graph.getNode(edge.source);
-                const target = graph.getNode(edge.target);
-                if (!source || !target) continue;
-                
-                const x1 = (source.x + panX) * zoom;
-                const y1 = (source.y + panY) * zoom;
-                const x2 = (target.x + panX) * zoom;
-                const y2 = (target.y + panY) * zoom;
-                
-                // 计算点到线段的距离
-                const distance = pointToLineDistance(screenX, screenY, x1, y1, x2, y2);
-                if (distance <= threshold) {
-                    return edge;
-                }
-            }
-            
-            return null;
-        }
-        
-        // 计算点到线段的距离
-        function pointToLineDistance(px, py, x1, y1, x2, y2) {
-            const dx = x2 - x1;
-            const dy = y2 - y1;
-            const len2 = dx * dx + dy * dy;
-            
-            if (len2 === 0) {
-                // 线段是一个点
-                return Math.hypot(px - x1, py - y1);
-            }
-            
-            let t = ((px - x1) * dx + (py - y1) * dy) / len2;
-            t = Math.max(0, Math.min(1, t));
-            
-            const projX = x1 + t * dx;
-            const projY = y1 + t * dy;
-            
-            return Math.hypot(px - projX, py - projY);
-        }
-        
         // 选择元素
         function selectElement(type, id) {
             selectedElement = { type, id };
-            updatePropertiesPanel();
-        }
-        
-        // 取消选择
-        function deselectElement() {
-            selectedElement = null;
-            updatePropertiesPanel();
-        }
-        
-        // 更新属性面板
-        function updatePropertiesPanel() {
-            const noSelection = document.getElementById('no-selection');
-            const nodeProps = document.getElementById('node-properties');
-            const edgeProps = document.getElementById('edge-properties');
             
-            noSelection.classList.add('hidden');
-            nodeProps.classList.add('hidden');
-            edgeProps.classList.add('hidden');
+            // 更新属性面板
+            document.getElementById('no-selection').classList.add('hidden');
+            document.getElementById('node-properties').classList.add('hidden');
+            document.getElementById('edge-properties').classList.add('hidden');
             
-            if (!selectedElement) {
-                noSelection.classList.remove('hidden');
-                return;
-            }
-            
-            if (selectedElement.type === 'node') {
-                const node = graph.getNode(selectedElement.id);
+            if (type === 'node') {
+                const node = graph.getNode(id);
                 if (node) {
                     document.getElementById('node-id').value = node.id;
                     document.getElementById('node-label').value = node.label;
@@ -1134,312 +1247,30 @@
                     document.getElementById('node-border-color').value = node.borderColor;
                     document.getElementById('node-border-text').value = node.borderColor;
                     document.getElementById('node-size').value = node.size;
-                    nodeProps.classList.remove('hidden');
+                    document.getElementById('node-properties').classList.remove('hidden');
                 }
-            } else if (selectedElement.type === 'edge') {
-                const edge = graph.getEdge(selectedElement.id);
+            } else if (type === 'edge') {
+                const edge = graph.getEdge(id);
                 if (edge) {
                     document.getElementById('edge-id').value = edge.id;
                     document.getElementById('edge-label').value = edge.label;
-                    document.getElementById('edge-weight').value = edge.weight || 1;
+                    document.getElementById('edge-weight').value = edge.weight;
                     document.getElementById('edge-color').value = edge.color;
                     document.getElementById('edge-color-text').value = edge.color;
                     document.getElementById('edge-width').value = edge.width;
-                    document.getElementById('edge-type').value = edge.type || 'straight';
-                    document.getElementById('edge-direction').value = edge.direction || 'undirected';
-                    edgeProps.classList.remove('hidden');
+                    document.getElementById('edge-type').value = edge.type;
+                    document.getElementById('edge-direction').value = edge.direction;
+                    document.getElementById('edge-properties').classList.remove('hidden');
                 }
             }
         }
         
-        // 设置属性面板事件
-        function setupPropertiesPanelEvents() {
-            // 节点属性事件
-            document.getElementById('node-id').addEventListener('change', (e) => {
-                if (selectedElement && selectedElement.type === 'node') {
-                    // 简单的ID验证
-                    if (/^[a-zA-Z0-9_]+$/.test(e.target.value) && !graph.getNode(e.target.value)) {
-                        graph.updateNode(selectedElement.id, { id: e.target.value });
-                        selectedElement.id = e.target.value;
-                        drawGraph();
-                    } else {
-                        e.target.value = selectedElement.id;
-                        alert('ID必须是唯一的字母数字组合');
-                    }
-                }
-            });
-            
-            document.getElementById('node-label').addEventListener('change', (e) => {
-                if (selectedElement && selectedElement.type === 'node') {
-                    graph.updateNode(selectedElement.id, { label: e.target.value });
-                    drawGraph();
-                }
-            });
-            
-            document.getElementById('node-color').addEventListener('input', (e) => {
-                if (selectedElement && selectedElement.type === 'node') {
-                    graph.updateNode(selectedElement.id, { color: e.target.value });
-                    document.getElementById('node-color-text').value = e.target.value;
-                    drawGraph();
-                }
-            });
-            
-            document.getElementById('node-color-text').addEventListener('change', (e) => {
-                if (selectedElement && selectedElement.type === 'node' && /^#([0-9A-F]{3}){1,2}$/i.test(e.target.value)) {
-                    graph.updateNode(selectedElement.id, { color: e.target.value });
-                    document.getElementById('node-color').value = e.target.value;
-                    drawGraph();
-                }
-            });
-            
-            // 类似地设置节点边框颜色和大小事件...
-            document.getElementById('node-border-color').addEventListener('input', (e) => {
-                if (selectedElement && selectedElement.type === 'node') {
-                    graph.updateNode(selectedElement.id, { borderColor: e.target.value });
-                    document.getElementById('node-border-text').value = e.target.value;
-                    drawGraph();
-                }
-            });
-            
-            document.getElementById('node-border-text').addEventListener('change', (e) => {
-                if (selectedElement && selectedElement.type === 'node' && /^#([0-9A-F]{3}){1,2}$/i.test(e.target.value)) {
-                    graph.updateNode(selectedElement.id, { borderColor: e.target.value });
-                    document.getElementById('node-border-color').value = e.target.value;
-                    drawGraph();
-                }
-            });
-            
-            document.getElementById('node-size').addEventListener('change', (e) => {
-                if (selectedElement && selectedElement.type === 'node') {
-                    graph.updateNode(selectedElement.id, { size: parseInt(e.target.value) });
-                    drawGraph();
-                }
-            });
-            
-            // 边属性事件
-            document.getElementById('edge-id').addEventListener('change', (e) => {
-                if (selectedElement && selectedElement.type === 'edge') {
-                    if (/^[a-zA-Z0-9_]+$/.test(e.target.value) && !graph.getEdge(e.target.value)) {
-                        graph.updateEdge(selectedElement.id, { id: e.target.value });
-                        selectedElement.id = e.target.value;
-                        drawGraph();
-                    } else {
-                        e.target.value = selectedElement.id;
-                        alert('ID必须是唯一的字母数字组合');
-                    }
-                }
-            });
-            
-            document.getElementById('edge-label').addEventListener('change', (e) => {
-                if (selectedElement && selectedElement.type === 'edge') {
-                    graph.updateEdge(selectedElement.id, { label: e.target.value });
-                    drawGraph();
-                }
-            });
-
-            document.getElementById('edge-weight').addEventListener('change', (e) => {
-                if (selectedElement && selectedElement.type === 'edge') {
-                    graph.updateEdge(selectedElement.id, { weight: parseFloat(e.target.value) });
-                    drawGraph();
-                }
-            });
-            
-            document.getElementById('edge-color').addEventListener('input', (e) => {
-                if (selectedElement && selectedElement.type === 'edge') {
-                    graph.updateEdge(selectedElement.id, { color: e.target.value });
-                    document.getElementById('edge-color-text').value = e.target.value;
-                    drawGraph();
-                }
-            });
-            
-            document.getElementById('edge-color-text').addEventListener('change', (e) => {
-                if (selectedElement && selectedElement.type === 'edge' && /^#([0-9A-F]{3}){1,2}$/i.test(e.target.value)) {
-                    graph.updateEdge(selectedElement.id, { color: e.target.value });
-                    document.getElementById('edge-color').value = e.target.value;
-                    drawGraph();
-                }
-            });
-            
-            document.getElementById('edge-width').addEventListener('change', (e) => {
-                if (selectedElement && selectedElement.type === 'edge') {
-                    graph.updateEdge(selectedElement.id, { width: parseInt(e.target.value) });
-                    drawGraph();
-                }
-            });
-            
-            document.getElementById('edge-type').addEventListener('change', (e) => {
-                if (selectedElement && selectedElement.type === 'edge') {
-                    graph.updateEdge(selectedElement.id, { type: e.target.value });
-                    drawGraph();
-                }
-            });
-
-            document.getElementById('edge-direction').addEventListener('change', (e) => {
-                if (selectedElement && selectedElement.type === 'edge') {
-                    graph.updateEdge(selectedElement.id, { direction: e.target.value });
-                    drawGraph();
-                }
-            });
-        }
-        
-        // 绘制箭头
-        function drawArrowhead(ctx, x, y, fromX, fromY) {
-            const headLength = 10;
-            const angle = Math.atan2(y - fromY, x - fromX);
-            
-            ctx.save();
-            ctx.translate(x, y);
-            ctx.rotate(angle);
-            ctx.beginPath();
-            ctx.moveTo(0, 0);
-            ctx.lineTo(-headLength, headLength / 2);
-            ctx.lineTo(-headLength, -headLength / 2);
-            ctx.closePath();
-            ctx.fill();
-            ctx.restore();
-        }
-        
-        // 绘制图形
-        function drawGraph() {
-            // 清空画布
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // 绘制边
-            graph.edges.forEach(edge => {
-                const source = graph.getNode(edge.source);
-                const target = graph.getNode(edge.target);
-                if (!source || !target) return;
-                
-                const x1 = (source.x + panX) * zoom;
-                const y1 = (source.y + panY) * zoom;
-                const x2 = (target.x + panX) * zoom;
-                const y2 = (target.y + panY) * zoom;
-                
-                ctx.strokeStyle = edge.color;
-                ctx.lineWidth = edge.width;
-                
-                // 设置线样式
-                if (edge.type === 'dashed') {
-                    ctx.setLineDash([5, 5]);
-                } else {
-                    ctx.setLineDash([]);
-                }
-                
-                ctx.beginPath();
-                
-                // 绘制不同类型的线
-                if (edge.type === 'curved') {
-                    const controlX = (x1 + x2) / 2 + (y1 - y2) * 0.2;
-                    const controlY = (y1 + y2) / 2 + (x2 - x1) * 0.2;
-                    ctx.moveTo(x1, y1);
-                    ctx.quadraticCurveTo(controlX, controlY, x2, y2);
-                } else {
-                    ctx.moveTo(x1, y1);
-                    ctx.lineTo(x2, y2);
-                }
-                
-                ctx.stroke();
-                
-                // 绘制箭头（有向边）
-                if (edge.direction === 'directed') {
-                    ctx.fillStyle = edge.color;
-                    drawArrowhead(ctx, x2, y2, x1, y1);
-                }
-                
-                // 绘制标签/权重
-                const label = edge.label || (edge.weight !== 1 ? edge.weight.toString() : '');
-                if (label) {
-                    const labelX = (x1 + x2) / 2;
-                    const labelY = (y1 + y2) / 2 - 10;
-                    
-                    ctx.fillStyle = '#000';
-                    ctx.font = '12px Arial';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(label, labelX, labelY);
-                }
-            });
-            
-            // 绘制节点
-            graph.nodes.forEach(node => {
-                const x = (node.x + panX) * zoom;
-                const y = (node.y + panY) * zoom;
-                const size = node.size * zoom;
-                
-                // 绘制节点背景
-                ctx.beginPath();
-                ctx.arc(x, y, size, 0, Math.PI * 2);
-                ctx.fillStyle = node.color;
-                ctx.fill();
-                
-                // 绘制节点边框
-                ctx.beginPath();
-                ctx.arc(x, y, size, 0, Math.PI * 2);
-                ctx.strokeStyle = node.borderColor;
-                ctx.lineWidth = 2;
-                ctx.stroke();
-                
-                // 绘制节点标签
-                ctx.fillStyle = '#fff';
-                ctx.font = '12px Arial';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(node.label, x, y);
-                
-                // 如果是选中的节点，绘制选中效果
-                if (selectedElement && selectedElement.type === 'node' && selectedElement.id === node.id) {
-                    ctx.beginPath();
-                    ctx.arc(x, y, size + 3, 0, Math.PI * 2);
-                    ctx.strokeStyle = '#8B5CF6';
-                    ctx.lineWidth = 2;
-                    ctx.setLineDash([3, 3]);
-                    ctx.stroke();
-                    ctx.setLineDash([]);
-                }
-            });
-            
-            // 绘制边选择效果
-            if (selectedElement && selectedElement.type === 'edge') {
-                const edge = graph.getEdge(selectedElement.id);
-                if (edge) {
-                    const source = graph.getNode(edge.source);
-                    const target = graph.getNode(edge.target);
-                    if (source && target) {
-                        const x1 = (source.x + panX) * zoom;
-                        const y1 = (source.y + panY) * zoom;
-                        const x2 = (target.x + panX) * zoom;
-                        const y2 = (target.y + panY) * zoom;
-                        
-                        ctx.strokeStyle = '#8B5CF6';
-                        ctx.lineWidth = edge.width + 2;
-                        ctx.setLineDash([3, 3]);
-                        
-                        ctx.beginPath();
-                        if (edge.type === 'curved') {
-                            const controlX = (x1 + x2) / 2 + (y1 - y2) * 0.2;
-                            const controlY = (y1 + y2) / 2 + (x2 - x1) * 0.2;
-                            ctx.moveTo(x1, y1);
-                            ctx.quadraticCurveTo(controlX, controlY, x2, y2);
-                        } else {
-                            ctx.moveTo(x1, y1);
-                            ctx.lineTo(x2, y2);
-                        }
-                        ctx.stroke();
-                        ctx.setLineDash([]);
-                    }
-                }
-            }
-        }
-        
-        // 更新缩放级别显示
-        function updateZoomLevel() {
-            document.getElementById('zoom-level').textContent = `${Math.round(zoom * 100)}%`;
-        }
-        
-        // 更新节点和边的计数器
-        function updateCounters() {
-            document.getElementById('node-count').textContent = graph.nodes.size;
-            document.getElementById('edge-count').textContent = graph.edges.size;
+        // 取消选择
+        function deselectElement() {
+            selectedElement = null;
+            document.getElementById('no-selection').classList.remove('hidden');
+            document.getElementById('node-properties').classList.add('hidden');
+            document.getElementById('edge-properties').classList.add('hidden');
         }
         
         // 打开边权输入模态框
@@ -1453,32 +1284,27 @@
             document.getElementById('edge-weight-modal').classList.add('hidden');
             document.getElementById('edge-source-input').value = '';
             document.getElementById('edge-target-input').value = '';
-            document.getElementById('edge-weight-input').value = '1';
+            document.getElementById('edge-weight-input').value = 1;
         }
         
         // 添加带权边
         function addWeightedEdge() {
-            const sourceId = document.getElementById('edge-source-input').value.trim();
-            const targetId = document.getElementById('edge-target-input').value.trim();
+            const source = document.getElementById('edge-source-input').value;
+            const target = document.getElementById('edge-target-input').value;
             const weight = parseFloat(document.getElementById('edge-weight-input').value);
             const direction = document.getElementById('edge-direction-input').value;
             
-            if (!sourceId || !targetId) {
+            if (!source || !target) {
                 alert('请输入起点和终点ID');
                 return;
             }
             
-            if (sourceId === targetId) {
+            if (source === target) {
                 alert('起点和终点不能相同');
                 return;
             }
             
-            if (!graph.getNode(sourceId) || !graph.getNode(targetId)) {
-                alert('指定的节点不存在');
-                return;
-            }
-            
-            const edge = graph.addEdge(sourceId, targetId, {
+            const edge = graph.addEdge(source, target, {
                 weight,
                 direction,
                 label: weight.toString()
@@ -1489,64 +1315,212 @@
                 updateCounters();
                 closeEdgeWeightModal();
             } else {
-                alert('无法添加边，可能已存在');
+                alert('添加失败：节点ID不存在');
             }
         }
         
-        // 处理文件导入
-        function handleFileImport(e) {
-            const file = e.target.files[0];
-            if (!file) return;
+        // 更新缩放级别显示
+        function updateZoomLevel() {
+            document.getElementById('zoom-level').textContent = `${Math.round(zoom * 100)}%`;
+        }
+        
+        // 更新节点和边的计数
+        function updateCounters() {
+            document.getElementById('node-count').textContent = graph.nodes.size;
+            document.getElementById('edge-count').textContent = graph.edges.size;
+        }
+        
+        // 判断点是否在线段上（用于边的选择）
+        function isPointOnLineSegment(px, py, x1, y1, x2, y2, tolerance) {
+            // 计算点到线段的距离
+            const A = px - x1;
+            const B = py - y1;
+            const C = x2 - x1;
+            const D = y2 - y1;
             
-            if (file.type !== 'application/json' && !file.name.endsWith('.json')) {
-                alert('请导入JSON格式的文件');
-                return;
+            const dot = A * C + B * D;
+            const lenSq = C * C + D * D;
+            let param = -1;
+            
+            if (lenSq !== 0) param = dot / lenSq;
+            
+            let xx, yy;
+            
+            if (param < 0) {
+                xx = x1;
+                yy = y1;
+            } else if (param > 1) {
+                xx = x2;
+                yy = y2;
+            } else {
+                xx = x1 + param * C;
+                yy = y1 + param * D;
             }
             
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                try {
-                    const data = JSON.parse(event.target.result);
-                    if (graph.importGraph(data)) {
-                        deselectElement();
-                        drawGraph();
-                        updateCounters();
-                        alert('导入成功');
-                    } else {
-                        alert('导入失败，文件格式不正确');
-                    }
-                } catch (error) {
-                    console.error('导入错误:', error);
-                    alert('导入失败，文件格式不正确');
+            const dx = px - xx;
+            const dy = py - yy;
+            
+            return dx * dx + dy * dy <= tolerance * tolerance;
+        }
+        
+        // 绘制图形
+        function drawGraph() {
+            if (!canvas || !ctx) return;
+            
+            // 清空画布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 保存上下文状态
+            ctx.save();
+            
+            // 应用平移和缩放
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.scale(zoom, zoom);
+            ctx.translate(-panX, -panY);
+            
+            // 绘制边
+            graph.edges.forEach(edge => {
+                const source = graph.getNode(edge.source);
+                const target = graph.getNode(edge.target);
+                if (!source || !target) return;
+                
+                // 边的样式
+                ctx.strokeStyle = edge.color;
+                ctx.lineWidth = edge.width;
+                
+                if (edge.type === 'dashed') {
+                    ctx.setLineDash([5, 5]);
+                } else {
+                    ctx.setLineDash([]);
                 }
-            };
-            reader.readAsText(file);
+                
+                // 计算节点边缘的点（而不是中心）
+                const dx = target.x - source.x;
+                const dy = target.y - source.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < 0.1) return; // 避免除以零
+                
+                const sourceX = source.x + (dx / distance) * source.size;
+                const sourceY = source.y + (dy / distance) * source.size;
+                const targetX = target.x - (dx / distance) * target.size;
+                const targetY = target.y - (dy / distance) * target.size;
+                
+                // 绘制边
+                ctx.beginPath();
+                
+                if (edge.type === 'curved' || edge.direction === 'directed') {
+                    // 曲线
+                    const controlX = (sourceX + targetX) / 2 - dy * 0.2;
+                    const controlY = (sourceY + targetY) / 2 + dx * 0.2;
+                    ctx.moveTo(sourceX, sourceY);
+                    ctx.quadraticCurveTo(controlX, controlY, targetX, targetY);
+                } else {
+                    // 直线
+                    ctx.moveTo(sourceX, sourceY);
+                    ctx.lineTo(targetX, targetY);
+                }
+                
+                ctx.stroke();
+                
+                // 绘制箭头（有向边）
+                if (edge.direction === 'directed') {
+                    const arrowSize = 8;
+                    const angle = Math.atan2(targetY - sourceY, targetX - sourceX);
+                    
+                    ctx.save();
+                    ctx.translate(targetX, targetY);
+                    ctx.rotate(angle);
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(-arrowSize, arrowSize / 2);
+                    ctx.lineTo(-arrowSize, -arrowSize / 2);
+                    ctx.closePath();
+                    ctx.fillStyle = edge.color;
+                    ctx.fill();
+                    ctx.restore();
+                }
+                
+                // 绘制标签/权重
+                if (edge.label || edge.weight) {
+                    const label = edge.label || edge.weight.toString();
+                    const midX = (sourceX + targetX) / 2;
+                    const midY = (sourceY + targetY) / 2;
+                    
+                    ctx.fillStyle = '#000';
+                    ctx.font = '12px Inter, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    
+                    // 略微偏移以避免与边重叠
+                    if (edge.type === 'curved' || edge.direction === 'directed') {
+                        const controlX = (sourceX + targetX) / 2 - dy * 0.2;
+                        const controlY = (sourceY + targetY) / 2 + dx * 0.2;
+                        ctx.fillText(label, controlX, controlY - 10);
+                    } else {
+                        ctx.fillText(label, midX, midY - 10);
+                    }
+                }
+            });
             
-            // 重置文件输入，允许重复选择同一个文件
-            e.target.value = '';
+            // 绘制节点
+            graph.nodes.forEach(node => {
+                // 节点背景
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, node.size, 0, Math.PI * 2);
+                ctx.fillStyle = node.color;
+                ctx.fill();
+                
+                // 节点边框
+                ctx.strokeStyle = node.borderColor;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // 如果是选中的节点，绘制选中效果
+                if (selectedElement && selectedElement.type === 'node' && selectedElement.id === node.id) {
+                    ctx.beginPath();
+                    ctx.arc(node.x, node.y, node.size + 3, 0, Math.PI * 2);
+                    ctx.strokeStyle = '#3B82F6';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([3, 3]);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+                
+                // 节点标签
+                ctx.fillStyle = '#fff';
+                ctx.font = '12px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(node.label, node.x, node.y);
+            });
+            
+            // 如果正在创建边，绘制临时边
+            if (edgeStartNode && (currentTool === 'edge' || currentTool === 'direct-edge')) {
+                const startNode = graph.getNode(edgeStartNode);
+                if (startNode) {
+                    const rect = canvas.getBoundingClientRect();
+                    const mouseX = (event.clientX - rect.left - canvas.width / 2) / zoom + panX;
+                    const mouseY = (event.clientY - rect.top - canvas.height / 2) / zoom + panY;
+                    
+                    ctx.strokeStyle = '#64748B';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash(currentTool === 'edge' ? [] : [5, 5]);
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(startNode.x, startNode.y);
+                    ctx.lineTo(mouseX, mouseY);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+            }
+            
+            // 恢复上下文状态
+            ctx.restore();
         }
         
-        // 导出图形
-        function exportGraph() {
-            const data = graph.exportGraph();
-            const json = JSON.stringify(data, null, 2);
-            const blob = new Blob([json], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `graph-${new Date().toISOString().slice(0,10)}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
-        
-        // 初始化
-        window.addEventListener('load', () => {
-            initCanvas();
-            updateCounters();
-        });
+        // 初始化应用
+        window.addEventListener('load', initCanvas);
     </script>
 </body>
 </html>
