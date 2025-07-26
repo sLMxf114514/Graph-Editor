@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GraphPlotter | 函数绘图工具</title>
+    <!-- 引入外部资源 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <!-- Tailwind 配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2563eb',
+                        secondary: '#64748b',
+                        accent: '#f97316',
+                        dark: '#0f172a',
+                        light: '#f8fafc'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <!-- 自定义工具类 -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .scrollbar-hide {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+            .scrollbar-hide::-webkit-scrollbar {
+                display: none;
+            }
+            .function-input {
+                @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all;
+            }
+            .btn {
+                @apply px-4 py-2 rounded-md font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+            }
+            .btn-primary {
+                @apply bg-primary text-white hover:bg-primary/90 focus:ring-primary/50;
+            }
+            .btn-secondary {
+                @apply bg-gray-200 text-gray-800 hover:bg-gray-300 focus:ring-gray-400/50;
+            }
+            .sidebar-item {
+                @apply p-3 hover:bg-gray-100 rounded-md transition-colors cursor-pointer;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans overflow-hidden h-screen flex flex-col">
+    <!-- 顶部导航栏 -->
+    <header class="bg-white shadow-sm border-b border-gray-200 py-3 px-4 flex justify-between items-center z-10">
+        <div class="flex items-center space-x-2">
+            <i class="fa fa-line-chart text-primary text-2xl"></i>
+            <h1 class="text-xl font-bold text-dark">GraphPlotter</h1>
+        </div>
+        
+        <div class="flex items-center space-x-4">
+            <button class="btn btn-secondary flex items-center space-x-1">
+                <i class="fa fa-save"></i>
+                <span>保存</span>
+            </button>
+            <button class="btn btn-primary flex items-center space-x-1">
+                <i class="fa fa-share-alt"></i>
+                <span>分享</span>
+            </button>
+        </div>
+    </header>
+    
+    <!-- 主内容区 -->
+    <main class="flex flex-1 overflow-hidden">
+        <!-- 左侧边栏 - 函数列表 -->
+        <aside class="w-72 bg-white border-r border-gray-200 flex flex-col h-full">
+            <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+                <h2 class="font-semibold">函数</h2>
+                <button id="add-function-btn" class="btn btn-primary p-2 h-auto">
+                    <i class="fa fa-plus"></i>
+                </button>
+            </div>
+            
+            <div id="functions-list" class="flex-1 overflow-y-auto scrollbar-hide p-2 space-y-2">
+                <!-- 函数输入框将动态添加到这里 -->
+                <div class="function-item bg-gray-50 p-3 rounded-lg flex items-center space-x-2">
+                    <div class="w-3 h-3 rounded-full bg-primary"></div>
+                    <input type="text" class="function-input bg-transparent border-0 p-0 focus:ring-0" value="y = x" placeholder="y = ...">
+                    <button class="delete-function text-gray-400 hover:text-red-500 transition-colors">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </div>
+                <div class="function-item bg-gray-50 p-3 rounded-lg flex items-center space-x-2">
+                    <div class="w-3 h-3 rounded-full bg-accent"></div>
+                    <input type="text" class="function-input bg-transparent border-0 p-0 focus:ring-0" value="y = sin(x)" placeholder="y = ...">
+                    <button class="delete-function text-gray-400 hover:text-red-500 transition-colors">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-4 border-t border-gray-200 space-y-2">
+                <button id="clear-all-btn" class="btn btn-secondary w-full flex items-center justify-center space-x-1">
+                    <i class="fa fa-trash"></i>
+                    <span>清除全部</span>
+                </button>
+                <button id="reset-view-btn" class="btn btn-secondary w-full flex items-center justify-center space-x-1">
+                    <i class="fa fa-refresh"></i>
+                    <span>重置视图</span>
+                </button>
+            </div>
+        </aside>
+        
+        <!-- 绘图区域 -->
+        <section class="flex-1 relative bg-gray-100 overflow-hidden">
+            <canvas id="graph-canvas" class="w-full h-full"></canvas>
+            
+            <!-- 坐标显示 -->
+            <div id="coordinates-display" class="absolute bottom-4 left-4 bg-white px-3 py-1 rounded-md shadow-md text-sm">
+                (x: 0, y: 0)
+            </div>
+            
+            <!-- 缩放控制 -->
+            <div class="absolute top-4 right-4 bg-white rounded-md shadow-md p-1 flex flex-col">
+                <button id="zoom-in-btn" class="p-2 hover:bg-gray-100 rounded transition-colors">
+                    <i class="fa fa-plus"></i>
+                </button>
+                <div class="border-t border-gray-200 my-1"></div>
+                <button id="zoom-out-btn" class="p-2 hover:bg-gray-100 rounded transition-colors">
+                    <i class="fa fa-minus"></i>
+                </button>
+            </div>
+        </section>
+        
+        <!-- 右侧边栏 - 设置 -->
+        <aside class="w-64 bg-white border-l border-gray-200 hidden md:flex flex-col h-full">
+            <div class="p-4 border-b border-gray-200">
+                <h2 class="font-semibold">设置（不可用）</h2>
+            </div>
+            
+            <div class="p-4 space-y-6 flex-1 overflow-y-auto scrollbar-hide">
+                <!-- 网格设置 -->
+                <div>
+                    <h3 class="font-medium mb-2">网格</h3>
+                    <div class="space-y-2">
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" checked class="rounded text-primary focus:ring-primary">
+                            <span>显示网格</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" checked class="rounded text-primary focus:ring-primary">
+                            <span>显示坐标轴</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- 标签设置 -->
+                <div>
+                    <h3 class="font-medium mb-2">标签</h3>
+                    <div class="space-y-2">
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" checked class="rounded text-primary focus:ring-primary">
+                            <span>显示坐标</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" checked class="rounded text-primary focus:ring-primary">
+                            <span>显示函数标签</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- 外观设置 -->
+                <div>
+                    <h3 class="font-medium mb-2">外观</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">主题</label>
+                            <select class="function-input">
+                                <option>浅色</option>
+                                <option>深色</option>
+                                <option>棕褐色</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-600 mb-1">线条粗细</label>
+                            <input type="range" min="1" max="5" value="2" class="w-full accent-primary">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </main>
+    
+    <!-- 页脚 -->
+    <footer class="bg-white border-t border-gray-200 py-2 px-4 text-sm text-gray-500 flex justify-between">
+        <div>GraphPlotter - 简单的函数绘图工具</div>
+        <div>支持: +, -, *, /, ^, sin, cos, tan, log, ln, sqrt</div>
+    </footer>
+
+    <script>
+        // 图表配置和状态
+        const graphState = {
+            scale: 40, // 每单位像素数
+            offsetX: 0, // 从中心的X偏移量（像素）
+            offsetY: 0, // 从中心的Y偏移量（像素）
+            dragging: false,
+            lastX: 0,
+            lastY: 0,
+            functions: [
+                { id: 1, expression: 'x', color: '#2563eb' },
+                { id: 2, expression: 'sin(x)', color: '#f97316' }
+            ],
+            colors: ['#2563eb', '#f97316', '#10b981', '#ef4444', '#8b5cf6', '#ec4899']
+        };
+        
+        // DOM元素
+        const canvas = document.getElementById('graph-canvas');
+        const ctx = canvas.getContext('2d');
+        const functionsList = document.getElementById('functions-list');
+        const addFunctionBtn = document.getElementById('add-function-btn');
+        const clearAllBtn = document.getElementById('clear-all-btn');
+        const resetViewBtn = document.getElementById('reset-view-btn');
+        const zoomInBtn = document.getElementById('zoom-in-btn');
+        const zoomOutBtn = document.getElementById('zoom-out-btn');
+        const coordinatesDisplay = document.getElementById('coordinates-display');
+        
+        // 设置画布大小以匹配显示大小
+        function resizeCanvas() {
+            const parent = canvas.parentElement;
+            canvas.width = parent.clientWidth;
+            canvas.height = parent.clientHeight;
+            drawGraph();
+        }
+        
+        // 初始化画布大小
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        
+        // 将画布坐标转换为图表坐标
+        function canvasToGraph(x, y) {
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            return {
+                x: (x - centerX - graphState.offsetX) / graphState.scale,
+                y: (centerY + graphState.offsetY - y) / graphState.scale
+            };
+        }
+        
+        // 将图表坐标转换为画布坐标
+        function graphToCanvas(x, y) {
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            return {
+                x: centerX + graphState.offsetX + x * graphState.scale,
+                y: centerY - graphState.offsetY - y * graphState.scale
+            };
+        }
+        
+        // 绘制网格线
+        function drawGrid() {
+            ctx.strokeStyle = '#e5e7eb';
+            ctx.lineWidth = 1;
+            
+            const centerX = canvas.width / 2 + graphState.offsetX;
+            const centerY = canvas.height / 2 - graphState.offsetY;
+            
+            // 垂直网格线
+            const vLines = Math.ceil(canvas.width / graphState.scale);
+            for (let i = -vLines; i <= vLines; i++) {
+                const x = centerX + i * graphState.scale;
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+                
+                // 绘制X轴标签
+                if (i !== 0) {
+                    ctx.fillStyle = '#64748b';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'top';
+                    ctx.fillText(i.toString(), x, centerY + 5);
+                }
+            }
+            
+            // 水平网格线
+            const hLines = Math.ceil(canvas.height / graphState.scale);
+            for (let i = -hLines; i <= hLines; i++) {
+                const y = centerY - i * graphState.scale;
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+                
+                // 绘制Y轴标签
+                if (i !== 0) {
+                    ctx.fillStyle = '#64748b';
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(i.toString(), centerX + 5, y);
+                }
+            }
+        }
+        
+        // 绘制坐标轴
+        function drawAxes() {
+            const centerX = canvas.width / 2 + graphState.offsetX;
+            const centerY = canvas.height / 2 - graphState.offsetY;
+            
+            // X轴
+            ctx.strokeStyle = '#374151';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, centerY);
+            ctx.lineTo(canvas.width, centerY);
+            ctx.stroke();
+            
+            // X轴箭头
+            ctx.beginPath();
+            ctx.moveTo(canvas.width - 10, centerY - 5);
+            ctx.lineTo(canvas.width, centerY);
+            ctx.lineTo(canvas.width - 10, centerY + 5);
+            ctx.fillStyle = '#374151';
+            ctx.fill();
+            
+            // Y轴
+            ctx.beginPath();
+            ctx.moveTo(centerX, 0);
+            ctx.lineTo(centerX, canvas.height);
+            ctx.stroke();
+            
+            // Y轴箭头
+            ctx.beginPath();
+            ctx.moveTo(centerX - 5, 10);
+            ctx.lineTo(centerX, 0);
+            ctx.lineTo(centerX + 5, 10);
+            ctx.fillStyle = '#374151';
+            ctx.fill();
+            
+            // 轴标签
+            ctx.fillStyle = '#1f2937';
+            ctx.font = 'bold 14px sans-serif';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            ctx.fillText('X', canvas.width - 15, centerY + 5);
+            ctx.fillText('Y', centerX + 5, 10);
+        }
+        
+        // 为给定的x值计算函数表达式
+        function evaluateFunction(expression, x) {
+            // 简单的表达式解析器 - 处理基本函数和运算
+            try {
+                // 将函数名替换为Math函数
+                let func = expression
+                    .replace(/sin/g, 'Math.sin')
+                    .replace(/cos/g, 'Math.cos')
+                    .replace(/tan/g, 'Math.tan')
+                    .replace(/log/g, 'Math.log10')
+                    .replace(/ln/g, 'Math.log')
+                    .replace(/sqrt/g, 'Math.sqrt')
+                    .replace(/\^/g, '**'); // 将^替换为**用于指数运算
+                
+                // 创建一个用于计算的函数
+                const evaluate = new Function('x', `return ${func};`);
+                return evaluate(x);
+            } catch (e) {
+                console.error('函数计算错误:', e);
+                return NaN;
+            }
+        }
+        
+        // 在图表上绘制函数
+        function drawFunction(func) {
+            ctx.strokeStyle = func.color;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            
+            let firstPoint = true;
+            
+            for (let i = 0; i < canvas.width; i += 1) {
+                const graphX = canvasToGraph(i, 0).x;
+                const graphY = evaluateFunction(func.expression, graphX);
+                
+                if (isNaN(graphY) || !isFinite(graphY)) {
+                    continue;
+                }
+                
+                const canvasPoint = graphToCanvas(graphX, graphY);
+                
+                if (firstPoint) {
+                    ctx.moveTo(canvasPoint.x, canvasPoint.y);
+                    firstPoint = false;
+                } else {
+                    ctx.lineTo(canvasPoint.x, canvasPoint.y);
+                }
+            }
+            
+            ctx.stroke();
+        }
+        
+        // 绘制整个图表
+        function drawGraph() {
+            // 清除画布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 绘制网格
+            drawGrid();
+            
+            // 绘制坐标轴
+            drawAxes();
+            
+            // 绘制每个函数
+            graphState.functions.forEach(func => {
+                drawFunction(func);
+            });
+        }
+        
+        // 更新坐标显示
+        function updateCoordinatesDisplay(x, y) {
+            const graphCoords = canvasToGraph(x, y);
+            coordinatesDisplay.textContent = `(x: ${graphCoords.x.toFixed(2)}, y: ${graphCoords.y.toFixed(2)})`;
+        }
+        
+        // 添加新函数
+        function addFunction() {
+            const newId = graphState.functions.length > 0 
+                ? Math.max(...graphState.functions.map(f => f.id)) + 1 
+                : 1;
+            
+            const colorIndex = (newId - 1) % graphState.colors.length;
+            const newFunction = {
+                id: newId,
+                expression: 'x',
+                color: graphState.colors[colorIndex]
+            };
+            
+            graphState.functions.push(newFunction);
+            renderFunctionInputs();
+            drawGraph();
+        }
+        
+        // 通过ID删除函数
+        function removeFunction(id) {
+            graphState.functions = graphState.functions.filter(func => func.id !== id);
+            renderFunctionInputs();
+            drawGraph();
+        }
+        
+        // 更新函数表达式
+        function updateFunctionExpression(id, expression) {
+            // 如果存在，提取'y = '后面的部分
+            const expr = expression.replace(/^y\s*=\s*/, '').trim() || '0';
+            const func = graphState.functions.find(f => f.id === id);
+            if (func) {
+                func.expression = expr;
+                drawGraph();
+            }
+        }
+        
+        // 渲染函数输入字段
+        function renderFunctionInputs() {
+            functionsList.innerHTML = '';
+            
+            graphState.functions.forEach(func => {
+                const functionItem = document.createElement('div');
+                functionItem.className = 'function-item bg-gray-50 p-3 rounded-lg flex items-center space-x-2';
+                functionItem.innerHTML = `
+                    <div class="w-3 h-3 rounded-full" style="background-color: ${func.color}"></div>
+                    <input type="text" class="function-input bg-transparent border-0 p-0 focus:ring-0" value="y = ${func.expression}" placeholder="y = ...">
+                    <button class="delete-function text-gray-400 hover:text-red-500 transition-colors">
+                        <i class="fa fa-times"></i>
+                    </button>
+                `;
+                
+                const input = functionItem.querySelector('input');
+                input.addEventListener('input', (e) => {
+                    updateFunctionExpression(func.id, e.target.value);
+                });
+                
+                const deleteBtn = functionItem.querySelector('.delete-function');
+                deleteBtn.addEventListener('click', () => {
+                    removeFunction(func.id);
+                });
+                
+                functionsList.appendChild(functionItem);
+            });
+        }
+        
+        // 事件监听器
+        addFunctionBtn.addEventListener('click', addFunction);
+        
+        clearAllBtn.addEventListener('click', () => {
+            graphState.functions = [];
+            renderFunctionInputs();
+            drawGraph();
+        });
+        
+        resetViewBtn.addEventListener('click', () => {
+            graphState.scale = 40;
+            graphState.offsetX = 0;
+            graphState.offsetY = 0;
+            drawGraph();
+        });
+        
+        zoomInBtn.addEventListener('click', () => {
+            graphState.scale *= 1.2;
+            drawGraph();
+        });
+        
+        zoomOutBtn.addEventListener('click', () => {
+            graphState.scale /= 1.2;
+            drawGraph();
+        });
+        
+        // 鼠标按下事件（用于拖动）
+        canvas.addEventListener('mousedown', (e) => {
+            graphState.dragging = true;
+            graphState.lastX = e.clientX;
+            graphState.lastY = e.clientY;
+            canvas.style.cursor = 'grabbing';
+        });
+        
+        // 鼠标移动事件（用于拖动和坐标显示）
+        window.addEventListener('mousemove', (e) => {
+            if (e.target === canvas) {
+                const rect = canvas.getBoundingClientRect();
+                updateCoordinatesDisplay(
+                    e.clientX - rect.left, 
+                    e.clientY - rect.top
+                );
+            }
+            
+            if (graphState.dragging) {
+                const dx = e.clientX - graphState.lastX;
+                const dy = e.clientY - graphState.lastY;
+                
+                graphState.offsetX += dx;
+                graphState.offsetY -= dy;
+                
+                graphState.lastX = e.clientX;
+                graphState.lastY = e.clientY;
+                
+                drawGraph();
+            }
+        });
+        
+        // 鼠标释放事件（停止拖动）
+        window.addEventListener('mouseup', () => {
+            if (graphState.dragging) {
+                graphState.dragging = false;
+                canvas.style.cursor = 'default';
+            }
+        });
+        
+        // 鼠标滚轮事件（用于缩放）
+        canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            
+            // 获取鼠标在画布中的位置
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            // 缩放前获取鼠标下的图表坐标
+            const graphCoords = canvasToGraph(mouseX, mouseY);
+            
+            // 根据滚轮方向缩放
+            if (e.deltaY < 0) {
+                graphState.scale *= 1.1;
+            } else {
+                graphState.scale /= 1.1;
+            }
+            
+            // 获取缩放后的画布坐标
+            const newCanvasCoords = graphToCanvas(graphCoords.x, graphCoords.y);
+            
+            // 调整偏移量，使鼠标下的点保持不变
+            graphState.offsetX += mouseX - newCanvasCoords.x;
+            graphState.offsetY += newCanvasCoords.y - mouseY;
+            
+            drawGraph();
+        });
+        
+        // 初始化
+        renderFunctionInputs();
+        drawGraph();
+    </script>
+</body>
+</html>
