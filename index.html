@@ -61,6 +61,13 @@
             .dropdown-item {
                 @apply block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left;
             }
+            /* 新增：工具提示样式 */
+            .tool-tip {
+                @apply absolute bg-dark text-white text-xs px-2 py-1 rounded opacity-0 transition-opacity duration-200 pointer-events-none whitespace-nowrap;
+            }
+            .tool-btn:hover .tool-tip {
+                @apply opacity-100;
+            }
         }
     </style>
 </head>
@@ -146,54 +153,91 @@
         </div>
     </header>
     
-    <!-- 主内容区保持不变 -->
+    <!-- 主内容区 -->
     <main class="flex flex-1 overflow-hidden">
         <!-- 左侧工具栏 -->
         <aside class="w-12 bg-white border-r border-gray-200 panel-shadow flex flex-col items-center py-3 space-y-2 z-10">
-            <button id="select-tool" class="tool-active w-8 h-8 rounded flex items-center justify-center border border-gray-300 hover:bg-gray-50 transition-colors" title="Select Tool (V)">
-                <i class="fa fa-mouse-pointer"></i>
-            </button>
-            <button id="node-tool" class="w-8 h-8 rounded flex items-center justify-center border border-gray-300 hover:bg-gray-50 transition-colors" title="Add Node (N)">
-                <i class="fa fa-circle-o text-sm"></i>
-            </button>
-            <button id="edge-tool" class="w-8 h-8 rounded flex items-center justify-center border border-gray-300 hover:bg-gray-50 transition-colors" title="Add Edge (E)">
-                <i class="fa fa-minus text-xs"></i>
-            </button>
-            <button id="direct-edge-tool" class="w-8 h-8 rounded flex items-center justify-center border border-gray-300 hover:bg-gray-50 transition-colors" title="Add Directed Edge (D)">
-                <i class="fa fa-long-arrow-right text-xs"></i>
-            </button>
-            <button id="weighted-edge-btn" class="w-8 h-8 rounded flex items-center justify-center border border-gray-300 hover:bg-gray-50 transition-colors" title="Add Weighted Edge (W)">
-                <i class="fa fa-balance-scale text-xs"></i>
-            </button>
-            <button id="batch-edges-btn" class="w-8 h-8 rounded flex items-center justify-center border border-gray-300 hover:bg-gray-50 transition-colors" title="Add Multiple Edges (M)">
-                <i class="fa fa-sitemap text-xs"></i>
-            </button>
-            <button id="delete-tool" class="w-8 h-8 rounded flex items-center justify-center border border-gray-300 hover:bg-gray-50 transition-colors" title="Delete (Delete)">
-                <i class="fa fa-trash-o"></i>
-            </button>
+            <div class="tool-btn relative">
+                <button id="select-tool" class="tool-active w-8 h-8 rounded flex items-center justify-center border border-gray-300 hover:bg-gray-50 transition-colors" title="Select Tool (V)">
+                    <i class="fa fa-mouse-pointer"></i>
+                </button>
+                <span class="tool-tip -right-20 top-1/2 -translate-y-1/2">选择工具 (V)</span>
+            </div>
+            <div class="tool-btn relative">
+                <button id="node-tool" class="w-8 h-8 rounded flex items-center justify-center border border-gray-300 hover:bg-gray-50 transition-colors" title="Add Node (N)">
+                    <i class="fa fa-circle-o text-sm"></i>
+                </button>
+                <span class="tool-tip -right-20 top-1/2 -translate-y-1/2">添加节点 (N)</span>
+            </div>
+            <div class="tool-btn relative">
+                <button id="edge-tool" class="w-8 h-8 rounded flex items-center justify-center border border-gray-300 hover:bg-gray-50 transition-colors" title="Add Edge (E)">
+                    <i class="fa fa-minus text-xs"></i>
+                </button>
+                <span class="tool-tip -right-20 top-1/2 -translate-y-1/2">添加边 (E)</span>
+            </div>
+            <div class="tool-btn relative">
+                <button id="direct-edge-tool" class="w-8 h-8 rounded flex items-center justify-center border border-gray-300 hover:bg-gray-50 transition-colors" title="Add Directed Edge (D)">
+                    <i class="fa fa-long-arrow-right text-xs"></i>
+                </button>
+                <span class="tool-tip -right-24 top-1/2 -translate-y-1/2">添加有向边 (D)</span>
+            </div>
+            <div class="tool-btn relative">
+                <button id="weighted-edge-btn" class="w-8 h-8 rounded flex items-center justify-center border border-gray-300 hover:bg-gray-50 transition-colors" title="Add Weighted Edge (W)">
+                    <i class="fa fa-balance-scale text-xs"></i>
+                </button>
+                <span class="tool-tip -right-24 top-1/2 -translate-y-1/2">添加带权边 (W)</span>
+            </div>
+            <div class="tool-btn relative">
+                <button id="batch-edges-btn" class="w-8 h-8 rounded flex items-center justify-center border border-gray-300 hover:bg-gray-50 transition-colors" title="Add Multiple Edges (M)">
+                    <i class="fa fa-sitemap text-xs"></i>
+                </button>
+                <span class="tool-tip -right-24 top-1/2 -translate-y-1/2">批量添加边 (M)</span>
+            </div>
+            <div class="tool-btn relative">
+                <button id="delete-tool" class="w-8 h-8 rounded flex items-center justify-center border border-gray-300 hover:bg-gray-50 transition-colors" title="Delete (Delete)">
+                    <i class="fa fa-trash-o"></i>
+                </button>
+                <span class="tool-tip -right-20 top-1/2 -translate-y-1/2">删除 (Delete)</span>
+            </div>
             
             <div class="w-6 h-px bg-gray-200 my-2"></div>
             
-            <button id="undo-btn" class="w-8 h-8 rounded flex items-center justify-center border border-gray-300 hover:bg-gray-50 transition-colors" title="Undo (Ctrl+Z)">
-                <i class="fa fa-undo"></i>
-            </button>
-            <button id="redo-btn" class="w-8 h-8 rounded flex items-center justify-center border border-gray-300 hover:bg-gray-50 transition-colors" title="Redo (Ctrl+Y)">
-                <i class="fa fa-repeat"></i>
-            </button>
+            <div class="tool-btn relative">
+                <button id="undo-btn" class="w-8 h-8 rounded flex items-center justify-center border border-gray-300 hover:bg-gray-50 transition-colors" title="Undo (Ctrl+Z)">
+                    <i class="fa fa-undo"></i>
+                </button>
+                <span class="tool-tip -right-20 top-1/2 -translate-y-1/2">撤销 (Ctrl+Z)</span>
+            </div>
+            <div class="tool-btn relative">
+                <button id="redo-btn" class="w-8 h-8 rounded flex items-center justify-center border border-gray-300 hover:bg-gray-50 transition-colors" title="Redo (Ctrl+Y)">
+                    <i class="fa fa-repeat"></i>
+                </button>
+                <span class="tool-tip -right-20 top-1/2 -translate-y-1/2">重做 (Ctrl+Y)</span>
+            </div>
             
             <div class="w-6 h-px bg-gray-200 my-2"></div>
             
-            <button id="layout-auto" class="w-8 h-8 rounded flex items-center justify-center border border-gray-300 hover:bg-gray-50 transition-colors" title="Auto Layout">
-                <i class="fa fa-magic"></i>
-            </button>
-            <button id="layout-circle" class="w-8 h-8 rounded flex items-center justify-center border border-gray-300 hover:bg-gray-50 transition-colors" title="Circle Layout">
-                <i class="fa fa-circle text-xs"></i>
-            </button>
+            <div class="tool-btn relative">
+                <button id="layout-auto" class="w-8 h-8 rounded flex items-center justify-center border border-gray-300 hover:bg-gray-50 transition-colors" title="Auto Layout">
+                    <i class="fa fa-magic"></i>
+                </button>
+                <span class="tool-tip -right-20 top-1/2 -translate-y-1/2">自动布局</span>
+            </div>
+            <div class="tool-btn relative">
+                <button id="layout-circle" class="w-8 h-8 rounded flex items-center justify-center border border-gray-300 hover:bg-gray-50 transition-colors" title="Circle Layout">
+                    <i class="fa fa-circle text-xs"></i>
+                </button>
+                <span class="tool-tip -right-20 top-1/2 -translate-y-1/2">圆形布局</span>
+            </div>
         </aside>
         
         <!-- 画布区域 -->
         <div id="canvas-container" class="flex-1 relative overflow-hidden bg-gray-100 drag-handle">
             <canvas id="graph-canvas" class="absolute inset-0 canvas-grid"></canvas>
+            <!-- 显示当前工具状态 -->
+            <div id="tool-status" class="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm shadow-md border border-gray-200">
+                选择工具 (V)
+            </div>
         </div>
         
         <!-- 右侧属性面板 -->
@@ -296,7 +340,7 @@
         </div>
         <div>
             <span class="mr-4">Press H for help</span>
-            <span>v1.2</span>
+            <span>v1.3</span>
         </div>
     </footer>
 
@@ -446,6 +490,8 @@ n3,n1,2"></textarea>
                 this.nextEdgeId = 1;
                 this.history = [];
                 this.historyIndex = -1;
+                // 保存初始状态
+                this.saveHistory();
             }
             
             // 保存历史记录
@@ -516,6 +562,7 @@ n3,n1,2"></textarea>
                         size: 30
                     };
                     this.nodes.set(id, node);
+                    this.saveHistory();
                     return node;
                 }
                 
@@ -531,6 +578,7 @@ n3,n1,2"></textarea>
                     size: 30
                 };
                 this.nodes.set(generatedId, node);
+                this.saveHistory();
                 return node;
             }
             
@@ -538,6 +586,19 @@ n3,n1,2"></textarea>
                 // 检查节点是否存在
                 if (!this.nodes.has(sourceId) || !this.nodes.has(targetId)) {
                     return null;
+                }
+                
+                // 检查边是否已存在
+                let edgeExists = false;
+                this.edges.forEach(edge => {
+                    if ((edge.source === sourceId && edge.target === targetId) || 
+                        (edge.direction === 'undirected' && edge.source === targetId && edge.target === sourceId)) {
+                        edgeExists = true;
+                    }
+                });
+                
+                if (edgeExists) {
+                    return null; // 边已存在，不重复添加
                 }
                 
                 const id = `e${this.nextEdgeId++}`;
@@ -553,6 +614,7 @@ n3,n1,2"></textarea>
                     direction: options.direction || 'undirected'
                 };
                 this.edges.set(id, edge);
+                this.saveHistory();
                 return edge;
             }
             
@@ -601,11 +663,6 @@ n3,n1,2"></textarea>
                         addedEdges.push(edge);
                     }
                 });
-                
-                // 只有在有成功添加的元素时才保存历史记录
-                if (addedEdges.length > 0 || addedNodes.length > 0) {
-                    this.saveHistory();
-                }
                 
                 return { addedEdges, addedNodes };
             }
@@ -800,9 +857,12 @@ n3,n1,2"></textarea>
         let dragElement = null;
         let edgeStartNode = null;
         let currentTool = 'select';
-        // 新增：记录拖拽偏移量，解决节点拖拽初始跳动问题
+        // 记录拖拽偏移量，解决节点拖拽初始跳动问题
         let dragOffsetX = 0;
         let dragOffsetY = 0;
+        // 记录鼠标位置用于绘制临时边
+        let mouseX = 0;
+        let mouseY = 0;
         
         // 初始化画布
         function initCanvas() {
@@ -1081,30 +1141,39 @@ n3,n1,2"></textarea>
                 btn.classList.remove('tool-active');
             });
             
+            // 更新工具状态显示
+            const toolStatus = document.getElementById('tool-status');
             switch(tool) {
                 case 'select':
                     document.getElementById('select-tool').classList.add('tool-active');
+                    toolStatus.textContent = '选择工具 (V)';
                     break;
                 case 'node':
                     document.getElementById('node-tool').classList.add('tool-active');
+                    toolStatus.textContent = '添加节点 (N) - 点击画布添加节点';
                     break;
                 case 'edge':
                     document.getElementById('edge-tool').classList.add('tool-active');
+                    toolStatus.textContent = '添加边 (E) - 依次点击两个节点';
                     break;
                 case 'direct-edge':
                     document.getElementById('direct-edge-tool').classList.add('tool-active');
+                    toolStatus.textContent = '添加有向边 (D) - 依次点击两个节点';
                     break;
                 case 'delete':
                     document.getElementById('delete-tool').classList.add('tool-active');
+                    toolStatus.textContent = '删除工具 (Delete) - 点击元素删除';
                     break;
             }
             
+            // 重置边绘制状态
+            edgeStartNode = null;
             deselectElement();
+            drawGraph();
         }
         
         // 坐标转换：画布坐标 -> 世界坐标
         function canvasToWorld(x, y) {
-            // 修正坐标转换公式，确保拖拽位置准确
             return {
                 x: (x - canvas.width / 2) / zoom + panX,
                 y: (y - canvas.height / 2) / zoom + panY
@@ -1113,7 +1182,6 @@ n3,n1,2"></textarea>
         
         // 坐标转换：世界坐标 -> 画布坐标
         function worldToCanvas(x, y) {
-            // 修正坐标转换公式，确保绘制位置准确
             return {
                 x: (x - panX) * zoom + canvas.width / 2,
                 y: (y - panY) * zoom + canvas.height / 2
@@ -1140,6 +1208,7 @@ n3,n1,2"></textarea>
                 const pos = worldToCanvas(node.x, node.y);
                 const dx = canvasX - pos.x;
                 const dy = canvasY - pos.y;
+                // 考虑缩放因素的节点点击区域
                 if (dx * dx + dy * dy <= node.size * node.size * zoom * zoom) {
                     clickedNode = node;
                     // 计算点击位置与节点中心的偏移量
@@ -1183,6 +1252,7 @@ n3,n1,2"></textarea>
                     break;
                     
                 case 'node':
+                    // 添加新节点
                     graph.addNode(worldPos.x, worldPos.y);
                     drawGraph();
                     updateCounters();
@@ -1194,20 +1264,30 @@ n3,n1,2"></textarea>
                         if (edgeStartNode) {
                             // 完成边的创建
                             if (edgeStartNode !== clickedNode.id) {
-                                graph.addEdge(
+                                const newEdge = graph.addEdge(
                                     edgeStartNode, 
                                     clickedNode.id, 
                                     { direction: currentTool === 'direct-edge' ? 'directed' : 'undirected' }
                                 );
-                                graph.saveHistory();
-                                drawGraph();
-                                updateCounters();
+                                if (newEdge) {
+                                    drawGraph();
+                                    updateCounters();
+                                } else {
+                                    alert('这条边已经存在！');
+                                }
+                            } else {
+                                alert('不能为节点创建自环边！');
                             }
                             edgeStartNode = null;
                         } else {
                             // 开始边的创建
                             edgeStartNode = clickedNode.id;
+                            drawGraph(); // 重绘以显示临时边
                         }
+                    } else {
+                        // 点击空白处取消边绘制
+                        edgeStartNode = null;
+                        drawGraph();
                     }
                     break;
                     
@@ -1229,12 +1309,25 @@ n3,n1,2"></textarea>
         
         // 处理鼠标移动事件
         function handleMouseMove(e) {
-            // 只有在拖拽状态下才处理移动事件
-            if (!isDragging) return;
-            
             const rect = canvas.getBoundingClientRect();
             const canvasX = e.clientX - rect.left;
             const canvasY = e.clientY - rect.top;
+            
+            // 更新鼠标位置
+            mouseX = canvasX;
+            mouseY = canvasY;
+            
+            // 如果正在创建边，更新临时边
+            if (edgeStartNode && (currentTool === 'edge' || currentTool === 'direct-edge')) {
+                drawGraph();
+                return;
+            }
+            
+            // 只有在拖拽状态下才处理移动事件
+            if (!isDragging) {
+                return;
+            }
+            
             const worldPos = canvasToWorld(canvasX, canvasY);
             
             if (dragElement && currentTool === 'select') {
@@ -1246,11 +1339,11 @@ n3,n1,2"></textarea>
                     drawGraph();
                 }
             } else if (currentTool === 'select') {
-                // 拖动画布 - 修复方向问题：使用减法而不是加法
+                // 拖动画布
                 const dx = (canvasX - dragStartX) / zoom;
                 const dy = (canvasY - dragStartY) / zoom;
-                panX -= dx;  // 这里改为减法，修复方向问题
-                panY -= dy;  // 这里改为减法，修复方向问题
+                panX -= dx;
+                panY -= dy;
                 dragStartX = canvasX;
                 dragStartY = canvasY;
                 drawGraph();
@@ -1261,10 +1354,6 @@ n3,n1,2"></textarea>
         function handleMouseUp() {
             isDragging = false;
             dragElement = null;
-            // 重置边的创建状态
-            if (currentTool === 'edge' || currentTool === 'direct-edge') {
-                edgeStartNode = null;
-            }
         }
         
         // 处理鼠标滚轮事件（缩放）
@@ -1297,6 +1386,13 @@ n3,n1,2"></textarea>
         
         // 处理键盘事件
         function handleKeyDown(e) {
+            // 如果有模态框打开，不处理快捷键
+            if (!document.getElementById('edge-weight-modal').classList.contains('hidden') ||
+                !document.getElementById('batch-edges-modal').classList.contains('hidden') ||
+                !document.getElementById('guide-modal').classList.contains('hidden')) {
+                return;
+            }
+            
             switch(e.key) {
                 case 'Delete':
                     if (selectedElement) {
@@ -1454,10 +1550,11 @@ n3,n1,2"></textarea>
             });
             
             if (edge) {
-                graph.saveHistory();
                 drawGraph();
                 updateCounters();
                 closeEdgeWeightModal();
+            } else {
+                alert('这条边已经存在！');
             }
         }
         
@@ -1689,6 +1786,15 @@ n3,n1,2"></textarea>
                     ctx.setLineDash([]);
                 }
                 
+                // 如果是边的起点，高亮显示
+                if (edgeStartNode === node.id) {
+                    ctx.beginPath();
+                    ctx.arc(node.x, node.y, node.size + 5, 0, Math.PI * 2);
+                    ctx.strokeStyle = '#10B981';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+                
                 // 节点标签
                 ctx.fillStyle = '#fff';
                 ctx.font = '12px Inter, sans-serif';
@@ -1701,19 +1807,36 @@ n3,n1,2"></textarea>
             if (edgeStartNode && (currentTool === 'edge' || currentTool === 'direct-edge')) {
                 const startNode = graph.getNode(edgeStartNode);
                 if (startNode) {
-                    const rect = canvas.getBoundingClientRect();
-                    const mouseX = (event.clientX - rect.left - canvas.width / 2) / zoom + panX;
-                    const mouseY = (event.clientY - rect.top - canvas.height / 2) / zoom + panY;
+                    // 使用记录的鼠标位置计算世界坐标
+                    const worldMouse = canvasToWorld(mouseX, mouseY);
                     
-                    ctx.strokeStyle = '#64748B';
+                    ctx.strokeStyle = currentTool === 'direct-edge' ? '#10B981' : '#64748B';
                     ctx.lineWidth = 2;
-                    ctx.setLineDash(currentTool === 'edge' ? [] : [5, 5]);
+                    ctx.setLineDash(currentTool === 'direct-edge' ? [3, 2] : []);
                     
                     ctx.beginPath();
                     ctx.moveTo(startNode.x, startNode.y);
-                    ctx.lineTo(mouseX, mouseY);
+                    ctx.lineTo(worldMouse.x, worldMouse.y);
                     ctx.stroke();
                     ctx.setLineDash([]);
+                    
+                    // 绘制临时箭头
+                    if (currentTool === 'direct-edge') {
+                        const arrowSize = 8;
+                        const angle = Math.atan2(worldMouse.y - startNode.y, worldMouse.x - startNode.x);
+                        
+                        ctx.save();
+                        ctx.translate(worldMouse.x, worldMouse.y);
+                        ctx.rotate(angle);
+                        ctx.beginPath();
+                        ctx.moveTo(0, 0);
+                        ctx.lineTo(-arrowSize, arrowSize / 2);
+                        ctx.lineTo(-arrowSize, -arrowSize / 2);
+                        ctx.closePath();
+                        ctx.fillStyle = '#10B981';
+                        ctx.fill();
+                        ctx.restore();
+                    }
                 }
             }
             
