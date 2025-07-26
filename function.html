@@ -59,22 +59,74 @@
         }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans overflow-hidden h-screen flex flex-col">
+<body class="font-inter bg-gray-50 text-dark overflow-hidden h-screen flex flex-col">
     <!-- 顶部导航栏 -->
-    <header class="bg-white shadow-sm border-b border-gray-200 py-3 px-4 flex justify-between items-center z-10">
-        <div class="flex items-center space-x-2">
-            <i class="fa fa-line-chart text-primary text-2xl"></i>
-            <h1 class="text-xl font-bold text-dark">GraphPlotter</h1>
+    <header class="bg-white border-b border-gray-200 py-2 px-4 flex items-center justify-between z-10">
+        <div class="flex items-center space-x-4">
+            <h1 class="text-xl font-bold text-primary flex items-center">
+                <i class="fa fa-sitemap mr-2"></i>
+                <span>Graph Editor</span>
+            </h1>
+            
+            <!-- 分类下拉菜单 -->
+            <div class="hidden md:flex space-x-1 ml-4 relative">
+                <!-- 操作分类 -->
+                <div class="relative group">
+                    <button class="px-3 py-1 text-sm rounded hover:bg-gray-100 transition-colors flex items-center">
+                        应用
+                        <i class="fa fa-chevron-down ml-1 text-xs"></i>
+                    </button>
+                    <div class="dropdown-content group-hover:block">
+                        <a href="https://vjudge.net" class="dropdown-item">画图</a>
+                        <a href="https://slmxf114514.github.io/Graph-Editor/function.html" class="dropdown-item">函数</a>
+                    </div>
+                </div>
+                
+                <!-- 学习分类 -->
+                <div class="relative group">
+                    <button class="px-3 py-1 text-sm rounded hover:bg-gray-100 transition-colors flex items-center">
+                        学习
+                        <i class="fa fa-chevron-down ml-1 text-xs"></i>
+                    </button>
+                    <div class="dropdown-content group-hover:block">
+                        <a href="https://www.luogu.com.cn" class="dropdown-item">洛谷</a>
+                        <a href="https://vjudge.net" class="dropdown-item">vjudge</a>
+                        <a href="https://codeforces.com" class="dropdown-item">CodeForces</a>
+                        <a href="https://atcoder.jp" class="dropdown-item">Atcoder</a>
+                    </div>
+                </div>
+                
+                <!-- 休闲分类 -->
+                <div class="relative group">
+                    <button class="px-3 py-1 text-sm rounded hover:bg-gray-100 transition-colors flex items-center">
+                        休闲
+                        <i class="fa fa-chevron-down ml-1 text-xs"></i>
+                    </button>
+                    <div class="dropdown-content group-hover:block">
+                        <a href="https://florr.io" class="dropdown-item">florr</a>
+                        <a href="https://petalstudy.com" class="dropdown-item">zorr</a>
+                        <a href="https://digdig.io" class="dropdown-item">digdig</a>
+                    </div>
+                </div>
+            </div>
         </div>
         
-        <div class="flex items-center space-x-4">
-            <button class="btn btn-secondary flex items-center space-x-1">
-                <i class="fa fa-save"></i>
-                <span>保存</span>
-            </button>
-            <button class="btn btn-primary flex items-center space-x-1">
-                <i class="fa fa-share-alt"></i>
-                <span>分享</span>
+        <div class="flex items-center space-x-3">
+            <div class="flex items-center bg-gray-100 rounded-full px-3 py-1 text-sm">
+                <button id="zoom-out" class="p-1 hover:bg-gray-200 rounded-full transition-colors">
+                    <i class="fa fa-minus"></i>
+                </button>
+                <span id="zoom-level" class="mx-2 w-12 text-center">100%</span>
+                <button id="zoom-in" class="p-1 hover:bg-gray-200 rounded-full transition-colors">
+                    <i class="fa fa-plus"></i>
+                </button>
+                <button id="zoom-reset" class="p-1 hover:bg-gray-200 rounded-full transition-colors ml-1">
+                    <i class="fa fa-arrows-alt"></i>
+                </button>
+            </div>
+            
+            <button class="md:hidden p-2 rounded hover:bg-gray-100 transition-colors">
+                <i class="fa fa-bars"></i>
             </button>
         </div>
     </header>
